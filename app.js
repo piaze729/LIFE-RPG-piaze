@@ -61,21 +61,66 @@ const achievements = [
   { id: "weight_7_logs", title: "체중 기록 7회", xp: 300, titleName: "불굴의 의지", isComplete: () => state.weightLogs.length >= 7 },
   { id: "first_commute", title: "첫 출근 기록", xp: 120, titleName: "출근 생존자", hidden: true, isComplete: () => getTotalMetric("commute_count") >= 1 },
   { id: "study_10_hours", title: "순공 10시간", xp: 400, titleName: "몰입하는 사람", hidden: true, isComplete: () => getTotalMetric("study_hours") >= 10 },
-  { id: "commute_5", title: "출근 5회", xp: 300, titleName: "루틴러", hidden: true, isComplete: () => getTotalMetric("commute_count") >= 5 }
+  {
+    id: "salary_warrior",
+    title: "주 5일 출근 + 매일 만보",
+    xp: 1200,
+    titleName: "월급전사",
+    hidden: true,
+    isComplete: () => getWeeklyCommuteTenThousandDays() >= 5
+  }
 ];
 
 const titleSets = [
   {
-    id: "workday_set",
-    title: "직장인 루틴 세트",
-    requirementIds: ["first_commute", "commute_5"],
-    effect: "출근 루틴 칭호 2종 보유"
+    id: "salary_set",
+    title: "월급전사 세트",
+    requirementIds: ["first_commute", "salary_warrior"],
+    effect: "출근과 걸음을 동시에 해낸 칭호 세트"
   },
   {
     id: "growth_set",
     title: "성장 루틴 세트",
     requirementIds: ["first_activity", "study_10_hours"],
     effect: "활동과 순공 칭호 동시 보유"
+  }
+];
+
+const setBonuses = [
+  {
+    id: "balanced_training_week",
+    title: "밸런스 운동 세트",
+    description: "운동시간 60분 + 유산소 1회 + 근력 2회",
+    rewardPoints: 300,
+    period: "weekly",
+    requirements: [
+      { metric: "workout_minutes", target: 60, label: "운동시간" },
+      { metric: "cardio_sessions", target: 1, label: "유산소" },
+      { metric: "strength_sessions", target: 2, label: "근력" }
+    ]
+  },
+  {
+    id: "lower_core_week",
+    title: "하체·코어 세트",
+    description: "스쿼트 100개 + 플랭크 5분 + 계단 20층",
+    rewardPoints: 220,
+    period: "weekly",
+    requirements: [
+      { metric: "squat_count", target: 100, label: "스쿼트" },
+      { metric: "plank_minutes", target: 5, label: "플랭크" },
+      { metric: "stairs_floors", target: 20, label: "계단" }
+    ]
+  },
+  {
+    id: "cardio_engine_week",
+    title: "유산소 엔진 세트",
+    description: "걷기 30,000보 + 러닝/자전거 10km",
+    rewardPoints: 400,
+    period: "weekly",
+    requirements: [
+      { metric: "steps", target: 30000, label: "걷기" },
+      { metric: "cardio_distance", target: 10, label: "러닝/자전거" }
+    ]
   }
 ];
 
@@ -137,6 +182,7 @@ const el = {
   weeklyGoalList: document.querySelector("#weeklyGoalList"),
   monthlyGoalList: document.querySelector("#monthlyGoalList"),
   achievementList: document.querySelector("#achievementList"),
+  setBonusList: document.querySelector("#setBonusList"),
   shopFilters: document.querySelector("#shopFilters"),
   shopList: document.querySelector("#shopList"),
   savingsForm: document.querySelector("#savingsForm"),
@@ -184,6 +230,8 @@ function loadState() {
     claimedWeeklyGoals: [],
     claimedMonthlyGoals: [],
     claimedAchievements: [],
+    claimedSetBonuses: [],
+    setBonusLogs: [],
     selectedTitleId: null
   };
 
@@ -312,6 +360,29 @@ function getMetric(metric, logs) {
   if (metric === "workout_sessions") {
     return logs.filter(isWorkoutLog).length;
   }
+  if (metric === "cardio_sessions") {
+    return logs.filter((log) => ["running_km", "cycling_km"].includes(log.activityTypeId)).length;
+  }
+  if (metric === "cardio_distance") {
+    return logs
+      .filter((log) => ["running_km", "cycling_km"].includes(log.activityTypeId))
+      .reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "strength_sessions") {
+    return logs.filter((log) => ["squat_count", "pushup_count", "plank_minutes"].includes(log.activityTypeId)).length;
+  }
+  if (metric === "squat_count") {
+    return logs.filter((log) => log.activityTypeId === "squat_count").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "pushup_count") {
+    return logs.filter((log) => log.activityTypeId === "pushup_count").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "plank_minutes") {
+    return logs.filter((log) => log.activityTypeId === "plank_minutes").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "stairs_floors") {
+    return logs.filter((log) => log.activityTypeId === "stairs_floors").reduce((sum, log) => sum + log.value, 0);
+  }
   if (metric === "commute_count") {
     return logs.filter((log) => log.activityTypeId === "commute").reduce((sum, log) => sum + log.value, 0);
   }
@@ -323,6 +394,17 @@ function getMetric(metric, logs) {
 
 function getTotalMetric(metric) {
   return getMetric(metric, state.activityLogs);
+}
+
+function getWeeklyCommuteTenThousandDays() {
+  const dayMap = new Map();
+  getLogsInRange(getWeekStart()).forEach((log) => {
+    const day = dayMap.get(log.date) || { commute: 0, steps: 0 };
+    if (log.activityTypeId === "commute") day.commute += log.value;
+    if (log.activityTypeId === "steps") day.steps += log.value;
+    dayMap.set(log.date, day);
+  });
+  return [...dayMap.values()].filter((day) => day.commute >= 1 && day.steps >= 10000).length;
 }
 
 function getTodayStats() {
@@ -389,6 +471,23 @@ function getSelectedTitleName() {
 
 function getActiveTitleSets() {
   return titleSets.filter((set) => set.requirementIds.every((id) => state.claimedAchievements.includes(id)));
+}
+
+function getSetBonusPeriodId(setBonus) {
+  return setBonus.period === "weekly" ? getWeekId() : getMonthId();
+}
+
+function getSetBonusLogs(setBonus) {
+  return setBonus.period === "weekly" ? getLogsInRange(getWeekStart()) : getLogsInRange(getMonthStart());
+}
+
+function formatRequirementProgress(metric, value) {
+  if (["workout_minutes", "plank_minutes"].includes(metric)) return `${Math.floor(value)}분`;
+  if (["cardio_distance"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}km`;
+  if (["steps"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}보`;
+  if (["stairs_floors"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}층`;
+  if (["squat_count", "pushup_count"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}개`;
+  return `${Math.floor(value).toLocaleString("ko-KR")}회`;
 }
 
 function addXp(amount, source, sourceId) {
@@ -494,6 +593,42 @@ function renderAchievements() {
   }).join("");
 }
 
+function renderSetBonuses() {
+  el.setBonusList.innerHTML = setBonuses.map((setBonus) => {
+    const logs = getSetBonusLogs(setBonus);
+    const claimId = `${getSetBonusPeriodId(setBonus)}:${setBonus.id}`;
+    const claimed = state.claimedSetBonuses.includes(claimId);
+    const requirements = setBonus.requirements.map((requirement) => {
+      const progress = getMetric(requirement.metric, logs);
+      return { ...requirement, progress, done: progress >= requirement.target };
+    });
+    const done = requirements.every((requirement) => requirement.done);
+    const percent = Math.min(100, Math.round(
+      requirements.reduce((sum, requirement) => sum + Math.min(1, requirement.progress / requirement.target), 0) / requirements.length * 100
+    ));
+    const detail = requirements.map((requirement) => (
+      `${requirement.label} ${formatRequirementProgress(requirement.metric, requirement.progress)} / ${formatRequirementProgress(requirement.metric, requirement.target)}`
+    )).join(" · ");
+
+    return `
+      <article class="rpg-item">
+        <div class="item-row">
+          <div>
+            <div class="item-title">${setBonus.title}</div>
+            <div class="item-meta">${setBonus.description}</div>
+          </div>
+          <span class="reward">+${setBonus.rewardPoints}P</span>
+        </div>
+        <div class="item-meta">${detail}</div>
+        <div class="progress-track"><span style="width:${percent}%"></span></div>
+        <button class="item-button" type="button" data-set-bonus-id="${setBonus.id}" ${done && !claimed ? "" : "disabled"}>
+          ${claimed ? "수령 완료" : done ? "포인트 수령" : "진행 중"}
+        </button>
+      </article>
+    `;
+  }).join("");
+}
+
 function renderShopFilters() {
   el.shopFilters.innerHTML = shopCategories.map((category) => `
     <button class="filter-button ${category === activeShopCategory ? "active" : ""}" type="button" data-shop-category="${category}">${category}</button>
@@ -541,7 +676,7 @@ function renderGrowth() {
     <div><span>칭호</span><strong>${getSelectedTitleName()}</strong></div>
     <div><span>누적 걸음</span><strong>${Math.round(totalSteps).toLocaleString("ko-KR")}보</strong></div>
     <div><span>누적 소모</span><strong>${Math.round(totalCalories).toLocaleString("ko-KR")} kcal</strong></div>
-    <div><span>세트효과</span><strong>${activeSets.length ? activeSets.map((set) => set.title).join(", ") : "없음"}</strong></div>
+    <div><span>칭호세트</span><strong>${activeSets.length ? activeSets.map((set) => set.title).join(", ") : "없음"}</strong></div>
   `;
   el.titleSelect.innerHTML = unlockedTitles.length
     ? unlockedTitles.map((title) => `<option value="${title.id}" ${title.id === state.selectedTitleId ? "selected" : ""}>${title.title}</option>`).join("")
@@ -702,7 +837,16 @@ function renderLogs() {
     amount: `${log.amount}P`,
     className: "positive"
   }));
-  const entries = [...activityEntries, ...purchaseEntries, ...savingsEntries].sort(byDateDesc).slice(0, 40);
+  const setBonusEntries = state.setBonusLogs.map((log) => ({
+    kind: "setBonus",
+    date: log.date,
+    createdAt: log.createdAt,
+    title: log.title,
+    detail: "세트효과 보너스",
+    amount: `+${log.rewardPoints}P`,
+    className: "positive"
+  }));
+  const entries = [...activityEntries, ...purchaseEntries, ...savingsEntries, ...setBonusEntries].sort(byDateDesc).slice(0, 40);
 
   el.logList.innerHTML = entries.length ? entries.map((entry) => `
     <article class="log-item">
@@ -721,6 +865,7 @@ function renderLogs() {
 function renderAll() {
   renderDashboard();
   renderGoals();
+  renderSetBonuses();
   renderAchievements();
   renderShopFilters();
   renderShop();
@@ -864,6 +1009,32 @@ function claimGoal(goalId, periodId, kind) {
   showToast(`${goal.title}: +${goal.xp}XP`);
 }
 
+function claimSetBonus(setBonusId) {
+  const setBonus = setBonuses.find((item) => item.id === setBonusId);
+  if (!setBonus) return;
+
+  const logs = getSetBonusLogs(setBonus);
+  const claimId = `${getSetBonusPeriodId(setBonus)}:${setBonus.id}`;
+  const done = setBonus.requirements.every((requirement) => getMetric(requirement.metric, logs) >= requirement.target);
+  if (!done || state.claimedSetBonuses.includes(claimId)) return;
+
+  state.claimedSetBonuses.push(claimId);
+  state.points += setBonus.rewardPoints;
+  state.totalEarned += setBonus.rewardPoints;
+  state.setBonusLogs.push({
+    id: `set_bonus_${Date.now()}`,
+    date: todayKey(),
+    createdAt: getDateTime(),
+    setBonusId: setBonus.id,
+    title: setBonus.title,
+    rewardPoints: setBonus.rewardPoints,
+    periodId: getSetBonusPeriodId(setBonus)
+  });
+  saveState();
+  renderAll();
+  showToast(`${setBonus.title}: +${setBonus.rewardPoints}P`);
+}
+
 function claimAchievement(achievementId) {
   const achievement = achievements.find((item) => item.id === achievementId);
   if (!achievement || state.claimedAchievements.includes(achievement.id) || !achievement.isComplete()) return;
@@ -931,6 +1102,11 @@ function bindEvents() {
   el.monthlyGoalList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-goal-id]");
     if (button) claimGoal(button.dataset.goalId, button.dataset.goalPeriod, button.dataset.goalKind);
+  });
+
+  el.setBonusList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-set-bonus-id]");
+    if (button) claimSetBonus(button.dataset.setBonusId);
   });
 
   el.achievementList.addEventListener("click", (event) => {

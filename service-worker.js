@@ -1,4 +1,4 @@
-const CACHE_NAME = "life-rpg-point-v6";
+const CACHE_NAME = "life-rpg-point-v7";
 const APP_SHELL = [
   "./",
   "./index.html",
