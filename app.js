@@ -7,7 +7,9 @@ const activityTypes = [
   { id: "pushup_count", label: "팔굽혀펴기", unit: "개", pointsPerUnit: 1.2, kcalPerUnit: 0.8 },
   { id: "plank_minutes", label: "플랭크", unit: "분", pointsPerUnit: 15, kcalPerUnit: 7 },
   { id: "stairs_floors", label: "계단", unit: "층", pointsPerUnit: 5, kcalPerUnit: 3 },
-  { id: "cleaning_minutes", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 }
+  { id: "cleaning_minutes", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 },
+  { id: "commute", label: "출근", unit: "회", pointsPerUnit: 100, kcalPerUnit: 0 },
+  { id: "study_hours", label: "순공 시간", unit: "시간", pointsPerUnit: 50, kcalPerUnit: 0 }
 ];
 
 const shopItems = [
@@ -56,7 +58,25 @@ const achievements = [
   { id: "total_50000_steps", title: "누적 50,000보", xp: 500, titleName: "오만보 기사", isComplete: () => getTotalMetric("steps") >= 50000 },
   { id: "total_100000_steps", title: "누적 100,000보", xp: 1000, titleName: "십만보 군주", isComplete: () => getTotalMetric("steps") >= 100000 },
   { id: "workout_20_sessions", title: "운동 20회", xp: 700, titleName: "철인", isComplete: () => getTotalMetric("workout_sessions") >= 20 },
-  { id: "weight_7_logs", title: "체중 기록 7회", xp: 300, titleName: "불굴의 의지", isComplete: () => state.weightLogs.length >= 7 }
+  { id: "weight_7_logs", title: "체중 기록 7회", xp: 300, titleName: "불굴의 의지", isComplete: () => state.weightLogs.length >= 7 },
+  { id: "first_commute", title: "첫 출근 기록", xp: 120, titleName: "출근 생존자", hidden: true, isComplete: () => getTotalMetric("commute_count") >= 1 },
+  { id: "study_10_hours", title: "순공 10시간", xp: 400, titleName: "몰입하는 사람", hidden: true, isComplete: () => getTotalMetric("study_hours") >= 10 },
+  { id: "commute_5", title: "출근 5회", xp: 300, titleName: "루틴러", hidden: true, isComplete: () => getTotalMetric("commute_count") >= 5 }
+];
+
+const titleSets = [
+  {
+    id: "workday_set",
+    title: "직장인 루틴 세트",
+    requirementIds: ["first_commute", "commute_5"],
+    effect: "출근 루틴 칭호 2종 보유"
+  },
+  {
+    id: "growth_set",
+    title: "성장 루틴 세트",
+    requirementIds: ["first_activity", "study_10_hours"],
+    effect: "활동과 순공 칭호 동시 보유"
+  }
 ];
 
 const levelTitles = [
@@ -99,7 +119,6 @@ const el = {
   savingsBalance: document.querySelector("#savingsBalance"),
   xpBalance: document.querySelector("#xpBalance"),
   todayCalories: document.querySelector("#todayCalories"),
-  averageWeight: document.querySelector("#averageWeight"),
   weightDelta: document.querySelector("#weightDelta"),
   levelLabel: document.querySelector("#levelLabel"),
   xpLabel: document.querySelector("#xpLabel"),
@@ -272,7 +291,15 @@ function getLogsInRange(start) {
 }
 
 function isWorkoutLog(log) {
-  return log.activityTypeId !== "steps" && log.activityTypeId !== "cleaning_minutes";
+  return [
+    "workout_minutes",
+    "running_km",
+    "cycling_km",
+    "squat_count",
+    "pushup_count",
+    "plank_minutes",
+    "stairs_floors"
+  ].includes(log.activityTypeId);
 }
 
 function getMetric(metric, logs) {
@@ -284,6 +311,12 @@ function getMetric(metric, logs) {
   }
   if (metric === "workout_sessions") {
     return logs.filter(isWorkoutLog).length;
+  }
+  if (metric === "commute_count") {
+    return logs.filter((log) => log.activityTypeId === "commute").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "study_hours") {
+    return logs.filter((log) => log.activityTypeId === "study_hours").reduce((sum, log) => sum + log.value, 0);
   }
   return 0;
 }
@@ -354,6 +387,10 @@ function getSelectedTitleName() {
   return unlocked.find((title) => title.id === state.selectedTitleId)?.title || unlocked[0]?.title || "칭호 없음";
 }
 
+function getActiveTitleSets() {
+  return titleSets.filter((set) => set.requirementIds.every((id) => state.claimedAchievements.includes(id)));
+}
+
 function addXp(amount, source, sourceId) {
   state.xp += amount;
   state.xpLogs = state.xpLogs || [];
@@ -371,7 +408,6 @@ function renderDashboard() {
   el.savingsBalance.textContent = formatPoints(state.savings);
   el.xpBalance.textContent = formatXp(state.xp);
   el.todayCalories.textContent = `${today.calories.toLocaleString("ko-KR")} kcal`;
-  el.averageWeight.textContent = formatWeight(weight.average7);
   el.weightDelta.textContent = Number.isFinite(weight.delta30)
     ? `${weight.delta30 > 0 ? "+" : ""}${weight.delta30.toFixed(1)}kg`
     : "-";
@@ -438,12 +474,15 @@ function renderAchievements() {
   el.achievementList.innerHTML = achievements.map((achievement) => {
     const done = achievement.isComplete();
     const claimed = state.claimedAchievements.includes(achievement.id);
+    const hiddenLocked = achievement.hidden && !done && !claimed;
+    const title = hiddenLocked ? "숨겨진 업적" : achievement.title;
+    const meta = hiddenLocked ? "조건을 만족하면 정체가 드러납니다." : `칭호: ${achievement.titleName}`;
     return `
       <article class="rpg-item">
         <div class="item-row">
           <div>
-            <div class="item-title">${achievement.title}</div>
-            <div class="item-meta">칭호: ${achievement.titleName}</div>
+            <div class="item-title">${title}</div>
+            <div class="item-meta">${meta}</div>
           </div>
           <span class="reward">+${achievement.xp}XP</span>
         </div>
@@ -493,6 +532,7 @@ function renderShop() {
 function renderGrowth() {
   const level = getLevel();
   const unlockedTitles = getUnlockedTitles();
+  const activeSets = getActiveTitleSets();
   const totalCalories = state.activityLogs.reduce((sum, log) => sum + log.estimatedCalories, 0);
   const totalSteps = getTotalMetric("steps");
   el.profileBox.innerHTML = `
@@ -501,6 +541,7 @@ function renderGrowth() {
     <div><span>칭호</span><strong>${getSelectedTitleName()}</strong></div>
     <div><span>누적 걸음</span><strong>${Math.round(totalSteps).toLocaleString("ko-KR")}보</strong></div>
     <div><span>누적 소모</span><strong>${Math.round(totalCalories).toLocaleString("ko-KR")} kcal</strong></div>
+    <div><span>세트효과</span><strong>${activeSets.length ? activeSets.map((set) => set.title).join(", ") : "없음"}</strong></div>
   `;
   el.titleSelect.innerHTML = unlockedTitles.length
     ? unlockedTitles.map((title) => `<option value="${title.id}" ${title.id === state.selectedTitleId ? "selected" : ""}>${title.title}</option>`).join("")
@@ -529,12 +570,17 @@ function renderGrowth() {
     amount: `+${log.xp.toLocaleString("ko-KR")}XP`
   }));
   const entries = [...savingsEntries, ...incomeEntries, ...xpEntries].sort(byDateDesc).slice(0, 12);
-  el.growthLogList.innerHTML = entries.length ? entries.map((entry) => `
+  const setMarkup = activeSets.length ? `
+    <div class="set-effect-list">
+      ${activeSets.map((set) => `<article class="set-effect"><strong>${set.title}</strong><span>${set.effect}</span></article>`).join("")}
+    </div>
+  ` : "";
+  el.growthLogList.innerHTML = `${setMarkup}${entries.length ? entries.map((entry) => `
     <article class="log-item">
       <div class="log-row"><strong>${entry.title}</strong><strong class="positive">${entry.amount}</strong></div>
       <small>${entry.date} · ${entry.detail}</small>
     </article>
-  `).join("") : "";
+  `).join("") : ""}`;
 }
 
 function updateSavingsPreview() {
