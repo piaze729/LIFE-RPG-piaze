@@ -11,10 +11,10 @@ const activityTypes = [
 ];
 
 const shopItems = [
-  { id: "egg", category: "단백질", title: "계란", unit: "1개", costPerUnit: 80, kcalPerUnit: 70 },
-  { id: "tofu", category: "단백질", title: "두부", unit: "100g", costPerUnit: 100, kcalPerUnit: 80 },
-  { id: "chicken_breast", category: "단백질", title: "닭가슴살", unit: "100g", costPerUnit: 120, kcalPerUnit: 110 },
-  { id: "tuna_can", category: "단백질", title: "참치", unit: "1캔", costPerUnit: 150, kcalPerUnit: 180 },
+  { id: "egg", category: "단백질", title: "계란", unit: "1개", costPerUnit: 0, kcalPerUnit: 70 },
+  { id: "tofu", category: "단백질", title: "두부", unit: "100g", costPerUnit: 0, kcalPerUnit: 80 },
+  { id: "chicken_breast", category: "단백질", title: "닭가슴살", unit: "100g", costPerUnit: 0, kcalPerUnit: 110 },
+  { id: "tuna_can", category: "단백질", title: "참치", unit: "1캔", costPerUnit: 0, kcalPerUnit: 180 },
   { id: "beef_shortplate", category: "고기류", title: "우삼겹", unit: "100g", costPerUnit: 300, kcalPerUnit: 330 },
   { id: "thin_pork_belly", category: "고기류", title: "대패삼겹", unit: "100g", costPerUnit: 320, kcalPerUnit: 360 },
   { id: "pork_belly", category: "고기류", title: "삼겹살", unit: "100g", costPerUnit: 400, kcalPerUnit: 420 },
@@ -107,6 +107,8 @@ const el = {
   selectedTitle: document.querySelector("#selectedTitle"),
   weeklySteps: document.querySelector("#weeklySteps"),
   weeklyWorkout: document.querySelector("#weeklyWorkout"),
+  todayFoodCount: document.querySelector("#todayFoodCount"),
+  todayFoodCalories: document.querySelector("#todayFoodCalories"),
   incomeStatus: document.querySelector("#incomeStatus"),
   motivationText: document.querySelector("#motivationText"),
   activityForm: document.querySelector("#activityForm"),
@@ -188,6 +190,22 @@ function formatXp(value) {
 
 function formatWeight(value) {
   return Number.isFinite(value) ? `${value.toFixed(1)}kg` : "-";
+}
+
+function formatShopQuantity(item, quantity) {
+  const match = item.unit.match(/^(\d+(?:\.\d+)?)(.+)$/);
+  if (!match) return `${quantity}${item.unit}`;
+
+  const unitAmount = Number(match[1]);
+  const unitLabel = match[2];
+  const totalAmount = quantity * unitAmount;
+  return `${Number.isInteger(totalAmount) ? totalAmount : totalAmount.toFixed(1)}${unitLabel}`;
+}
+
+function formatLogQuantity(log) {
+  const item = shopItems.find((shopItem) => shopItem.id === log.itemId);
+  if (item) return formatShopQuantity(item, log.quantity || 1);
+  return `${log.quantity || 1}${log.unit || ""}`;
 }
 
 function byDateDesc(a, b) {
@@ -285,6 +303,15 @@ function getTodayStats() {
   };
 }
 
+function getTodayFoodStats() {
+  const today = todayKey();
+  const logs = state.purchaseLogs.filter((log) => log.date === today);
+  return {
+    count: logs.reduce((sum, log) => sum + (log.quantity || 1), 0),
+    calories: logs.reduce((sum, log) => sum + (log.estimatedCalories || 0), 0)
+  };
+}
+
 function getWeeklyStats() {
   const logs = getLogsInRange(getWeekStart());
   return {
@@ -335,6 +362,7 @@ function addXp(amount, source, sourceId) {
 
 function renderDashboard() {
   const today = getTodayStats();
+  const food = getTodayFoodStats();
   const week = getWeeklyStats();
   const weight = getWeightStats();
   const level = getLevel();
@@ -354,6 +382,8 @@ function renderDashboard() {
   el.selectedTitle.textContent = getSelectedTitleName();
   el.weeklySteps.textContent = `${Math.round(week.steps).toLocaleString("ko-KR")}보`;
   el.weeklyWorkout.textContent = `${Math.round(week.workoutMinutes).toLocaleString("ko-KR")}분`;
+  el.todayFoodCount.textContent = `${food.count.toLocaleString("ko-KR")}단위`;
+  el.todayFoodCalories.textContent = `${food.calories.toLocaleString("ko-KR")} kcal`;
   el.weeklySummary.textContent = `이번 주 ${Math.round(week.steps).toLocaleString("ko-KR")}보 · 운동 ${week.workoutSessions}회`;
   el.incomeStatus.textContent = `예상 일요일 인컴 +${Math.floor(state.savings / 10).toLocaleString("ko-KR")}XP`;
   el.motivationText.textContent = state.points > 0
@@ -437,20 +467,22 @@ function renderShop() {
     const quantity = shopQuantities[item.id] || 1;
     const purchase = calculatePurchase(item, quantity);
     const canBuy = state.points >= purchase.totalCost;
+    const unitCost = item.costPerUnit === 0 ? "무료" : `${item.costPerUnit}P`;
+    const totalCost = purchase.totalCost === 0 ? "무료" : `${purchase.totalCost.toLocaleString("ko-KR")}P`;
     return `
       <article class="rpg-item shop-card">
         <div>
           <div class="item-title">${item.title}</div>
-          <div class="item-meta">${item.category} · ${item.unit}당 ${item.costPerUnit}P · ${item.kcalPerUnit} kcal</div>
+          <div class="item-meta">${item.category} · ${item.unit}당 ${unitCost} · ${item.kcalPerUnit} kcal</div>
         </div>
         <div class="quantity-control" aria-label="${item.title} 수량 선택">
           <button class="quantity-button" type="button" data-quantity-action="decrease" data-item-id="${item.id}" ${quantity <= 1 ? "disabled" : ""}>-</button>
-          <span>${quantity}${item.unit}</span>
+          <span>${formatShopQuantity(item, quantity)}</span>
           <button class="quantity-button" type="button" data-quantity-action="increase" data-item-id="${item.id}">+</button>
         </div>
         <div class="shop-total">
           <span>총 ${purchase.estimatedCalories.toLocaleString("ko-KR")} kcal</span>
-          <strong class="cost">${purchase.totalCost.toLocaleString("ko-KR")}P</strong>
+          <strong class="cost">${totalCost}</strong>
         </div>
         <button class="item-button buy" type="button" data-item-id="${item.id}" ${canBuy ? "" : "disabled"}>${canBuy ? "구매" : "포인트 부족"}</button>
       </article>
@@ -611,7 +643,7 @@ function renderLogs() {
     date: log.date,
     createdAt: log.createdAt,
     title: log.title || shopItems.find((item) => item.id === log.itemId)?.title || "상점 구매",
-    detail: log.quantity ? `${log.quantity}${log.unit} · ${log.estimatedCalories.toLocaleString("ko-KR")} kcal` : "상점 구매",
+    detail: log.quantity ? `${formatLogQuantity(log)} · ${log.estimatedCalories.toLocaleString("ko-KR")} kcal` : "상점 구매",
     amount: `-${getPurchaseCost(log)}P`,
     className: "negative"
   }));
@@ -716,7 +748,8 @@ function buyItem(itemId) {
   });
   saveState();
   renderAll();
-  showToast(`${item.title} ${purchase.quantity}${item.unit} 구매: -${purchase.totalCost}P`);
+  const costText = purchase.totalCost === 0 ? "무료" : `-${purchase.totalCost}P`;
+  showToast(`${item.title} ${formatShopQuantity(item, purchase.quantity)} 기록: ${costText}`);
 }
 
 function depositSavings() {
