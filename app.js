@@ -3,8 +3,13 @@ const activityTypes = [
   { id: "workout_minutes", label: "운동 시간", unit: "분", pointsPerUnit: 5, kcalPerUnit: 6 },
   { id: "running_km", label: "러닝", unit: "km", pointsPerUnit: 70, kcalPerUnit: 70 },
   { id: "cycling_km", label: "자전거", unit: "km", pointsPerUnit: 25, kcalPerUnit: 25 },
+  { id: "jump_rope_minutes", label: "줄넘기", unit: "분", pointsPerUnit: 8, kcalPerUnit: 12 },
+  { id: "stretching_minutes", label: "스트레칭", unit: "분", pointsPerUnit: 3, kcalPerUnit: 2.5 },
   { id: "squat_count", label: "스쿼트", unit: "개", pointsPerUnit: 0.8, kcalPerUnit: 0.5 },
   { id: "pushup_count", label: "팔굽혀펴기", unit: "개", pointsPerUnit: 1.2, kcalPerUnit: 0.8 },
+  { id: "lunge_count", label: "런지", unit: "개", pointsPerUnit: 0.9, kcalPerUnit: 0.6 },
+  { id: "situp_count", label: "윗몸일으키기", unit: "개", pointsPerUnit: 0.9, kcalPerUnit: 0.5 },
+  { id: "burpee_count", label: "버피", unit: "개", pointsPerUnit: 2.5, kcalPerUnit: 1.5 },
   { id: "plank_minutes", label: "플랭크", unit: "분", pointsPerUnit: 15, kcalPerUnit: 7 },
   { id: "stairs_floors", label: "계단", unit: "층", pointsPerUnit: 5, kcalPerUnit: 3 },
   { id: "cleaning_minutes", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 },
@@ -114,12 +119,23 @@ const setBonuses = [
   {
     id: "cardio_engine_week",
     title: "유산소 엔진 세트",
-    description: "걷기 30,000보 + 러닝/자전거 10km",
+    description: "걷기 30,000보 + 러닝/자전거 10km 또는 줄넘기 20분",
     rewardPoints: 400,
     period: "weekly",
     requirements: [
       { metric: "steps", target: 30000, label: "걷기" },
-      { metric: "cardio_distance", target: 10, label: "러닝/자전거" }
+      { metric: "cardio_volume", target: 10, label: "유산소 볼륨" }
+    ]
+  },
+  {
+    id: "recovery_week",
+    title: "회복 루틴 세트",
+    description: "스트레칭 30분 + 운동시간 30분",
+    rewardPoints: 160,
+    period: "weekly",
+    requirements: [
+      { metric: "stretching_minutes", target: 30, label: "스트레칭" },
+      { metric: "workout_minutes", target: 30, label: "운동시간" }
     ]
   }
 ];
@@ -343,8 +359,13 @@ function isWorkoutLog(log) {
     "workout_minutes",
     "running_km",
     "cycling_km",
+    "jump_rope_minutes",
+    "stretching_minutes",
     "squat_count",
     "pushup_count",
+    "lunge_count",
+    "situp_count",
+    "burpee_count",
     "plank_minutes",
     "stairs_floors"
   ].includes(log.activityTypeId);
@@ -361,15 +382,29 @@ function getMetric(metric, logs) {
     return logs.filter(isWorkoutLog).length;
   }
   if (metric === "cardio_sessions") {
-    return logs.filter((log) => ["running_km", "cycling_km"].includes(log.activityTypeId)).length;
+    return logs.filter((log) => ["running_km", "cycling_km", "jump_rope_minutes"].includes(log.activityTypeId)).length;
   }
   if (metric === "cardio_distance") {
     return logs
       .filter((log) => ["running_km", "cycling_km"].includes(log.activityTypeId))
       .reduce((sum, log) => sum + log.value, 0);
   }
+  if (metric === "cardio_volume") {
+    const distance = getMetric("cardio_distance", logs);
+    const jumpRopeEquivalent = logs
+      .filter((log) => log.activityTypeId === "jump_rope_minutes")
+      .reduce((sum, log) => sum + log.value / 2, 0);
+    return distance + jumpRopeEquivalent;
+  }
   if (metric === "strength_sessions") {
-    return logs.filter((log) => ["squat_count", "pushup_count", "plank_minutes"].includes(log.activityTypeId)).length;
+    return logs.filter((log) => [
+      "squat_count",
+      "pushup_count",
+      "lunge_count",
+      "situp_count",
+      "burpee_count",
+      "plank_minutes"
+    ].includes(log.activityTypeId)).length;
   }
   if (metric === "squat_count") {
     return logs.filter((log) => log.activityTypeId === "squat_count").reduce((sum, log) => sum + log.value, 0);
@@ -377,8 +412,20 @@ function getMetric(metric, logs) {
   if (metric === "pushup_count") {
     return logs.filter((log) => log.activityTypeId === "pushup_count").reduce((sum, log) => sum + log.value, 0);
   }
+  if (metric === "lunge_count") {
+    return logs.filter((log) => log.activityTypeId === "lunge_count").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "situp_count") {
+    return logs.filter((log) => log.activityTypeId === "situp_count").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "burpee_count") {
+    return logs.filter((log) => log.activityTypeId === "burpee_count").reduce((sum, log) => sum + log.value, 0);
+  }
   if (metric === "plank_minutes") {
     return logs.filter((log) => log.activityTypeId === "plank_minutes").reduce((sum, log) => sum + log.value, 0);
+  }
+  if (metric === "stretching_minutes") {
+    return logs.filter((log) => log.activityTypeId === "stretching_minutes").reduce((sum, log) => sum + log.value, 0);
   }
   if (metric === "stairs_floors") {
     return logs.filter((log) => log.activityTypeId === "stairs_floors").reduce((sum, log) => sum + log.value, 0);
@@ -482,11 +529,11 @@ function getSetBonusLogs(setBonus) {
 }
 
 function formatRequirementProgress(metric, value) {
-  if (["workout_minutes", "plank_minutes"].includes(metric)) return `${Math.floor(value)}분`;
-  if (["cardio_distance"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}km`;
+  if (["workout_minutes", "plank_minutes", "stretching_minutes"].includes(metric)) return `${Math.floor(value)}분`;
+  if (["cardio_distance", "cardio_volume"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}km`;
   if (["steps"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}보`;
   if (["stairs_floors"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}층`;
-  if (["squat_count", "pushup_count"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}개`;
+  if (["squat_count", "pushup_count", "lunge_count", "situp_count", "burpee_count"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}개`;
   return `${Math.floor(value).toLocaleString("ko-KR")}회`;
 }
 
