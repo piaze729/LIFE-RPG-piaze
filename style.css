@@ -50,6 +50,58 @@ button {
   padding: max(18px, env(safe-area-inset-top)) 16px max(28px, env(safe-area-inset-bottom));
 }
 
+.app-meta {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  margin-bottom: 8px;
+  color: var(--muted);
+  font-size: 0.78rem;
+  font-weight: 800;
+}
+
+.text-button {
+  min-height: 30px;
+  padding: 0 10px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--blue);
+  background: rgba(23, 32, 51, 0.8);
+  font-size: 0.78rem;
+  font-weight: 900;
+}
+
+.update-banner {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+  margin-bottom: 10px;
+  padding: 10px 12px;
+  border: 1px solid rgba(82, 210, 115, 0.35);
+  border-radius: 8px;
+  background: rgba(82, 210, 115, 0.12);
+  color: #d9ffe4;
+  font-size: 0.86rem;
+  font-weight: 800;
+}
+
+.update-banner[hidden] {
+  display: none;
+}
+
+.update-banner button {
+  min-height: 34px;
+  padding: 0 10px;
+  border-radius: 8px;
+  color: #06230f;
+  background: var(--green);
+  font-size: 0.82rem;
+  font-weight: 900;
+  white-space: nowrap;
+}
+
 .hero {
   display: flex;
   align-items: flex-start;

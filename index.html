@@ -13,6 +13,16 @@
   </head>
   <body>
     <div class="app-shell">
+      <div class="app-meta" aria-label="앱 버전과 업데이트 상태">
+        <span id="appVersion">Life RPG Point v0.2.6</span>
+        <button id="forceRefreshButton" class="text-button" type="button">업데이트 확인</button>
+      </div>
+
+      <div id="updateBanner" class="update-banner" hidden>
+        <span>새 버전이 준비되었습니다.</span>
+        <button id="applyUpdateButton" type="button">업데이트 적용</button>
+      </div>
+
       <header class="hero">
         <div>
           <p class="eyebrow">Reality RPG Dashboard</p>

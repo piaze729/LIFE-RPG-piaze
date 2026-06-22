@@ -212,6 +212,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
+const APP_VERSION = "v0.2.6";
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
 let state = loadState();
@@ -219,6 +220,10 @@ let activeShopCategory = "전체";
 let shopQuantities = Object.fromEntries(shopItems.map((item) => [item.id, 1]));
 
 const el = {
+  appVersion: document.querySelector("#appVersion"),
+  updateBanner: document.querySelector("#updateBanner"),
+  applyUpdateButton: document.querySelector("#applyUpdateButton"),
+  forceRefreshButton: document.querySelector("#forceRefreshButton"),
   pointBalance: document.querySelector("#pointBalance"),
   savingsBalance: document.querySelector("#savingsBalance"),
   xpBalance: document.querySelector("#xpBalance"),
@@ -1207,11 +1212,43 @@ function clearAllData() {
 }
 
 let toastTimer;
+let waitingServiceWorker = null;
+let isReloadingForUpdate = false;
+
 function showToast(message) {
   clearTimeout(toastTimer);
   el.toast.textContent = message;
   el.toast.classList.add("show");
   toastTimer = setTimeout(() => el.toast.classList.remove("show"), 2200);
+}
+
+function showUpdateBanner(worker = null) {
+  waitingServiceWorker = worker;
+  el.updateBanner.hidden = false;
+}
+
+async function clearAppCaches() {
+  if (!("caches" in window)) return;
+  const cacheNames = await caches.keys();
+  await Promise.all(cacheNames.map((cacheName) => caches.delete(cacheName)));
+}
+
+async function forceRefreshApp() {
+  showToast("캐시를 비우고 최신 파일을 불러옵니다.");
+  await clearAppCaches();
+  if ("serviceWorker" in navigator) {
+    const registrations = await navigator.serviceWorker.getRegistrations();
+    await Promise.all(registrations.map((registration) => registration.update()));
+  }
+  window.location.reload();
+}
+
+function applyAvailableUpdate() {
+  if (waitingServiceWorker) {
+    waitingServiceWorker.postMessage({ type: "SKIP_WAITING" });
+    return;
+  }
+  forceRefreshApp();
 }
 
 function bindEvents() {
@@ -1308,16 +1345,39 @@ function bindEvents() {
   });
 
   el.clearDataButton.addEventListener("click", clearAllData);
+  el.applyUpdateButton.addEventListener("click", applyAvailableUpdate);
+  el.forceRefreshButton.addEventListener("click", forceRefreshApp);
 }
 
 function registerServiceWorker() {
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("service-worker.js").catch(() => {
+    navigator.serviceWorker.addEventListener("controllerchange", () => {
+      if (isReloadingForUpdate) return;
+      isReloadingForUpdate = true;
+      window.location.reload();
+    });
+
+    navigator.serviceWorker.register("service-worker.js").then((registration) => {
+      if (registration.waiting) showUpdateBanner(registration.waiting);
+
+      registration.addEventListener("updatefound", () => {
+        const worker = registration.installing;
+        if (!worker) return;
+        worker.addEventListener("statechange", () => {
+          if (worker.state === "installed" && navigator.serviceWorker.controller) {
+            showUpdateBanner(worker);
+          }
+        });
+      });
+
+      setInterval(() => registration.update(), 60 * 60 * 1000);
+    }).catch(() => {
       console.warn("Service worker registration failed.");
     });
   }
 }
 
+el.appVersion.textContent = `Life RPG Point ${APP_VERSION}`;
 el.weightDate.value = todayKey();
 renderActivityForm();
 bindEvents();
