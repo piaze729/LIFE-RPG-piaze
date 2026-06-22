@@ -212,7 +212,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.2.8";
+const APP_VERSION = "v0.2.9";
 const WITHDRAW_FEE_RATE = 0.15;
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
@@ -227,17 +227,13 @@ const el = {
   forceRefreshButton: document.querySelector("#forceRefreshButton"),
   pointBalance: document.querySelector("#pointBalance"),
   savingsBalance: document.querySelector("#savingsBalance"),
-  xpBalance: document.querySelector("#xpBalance"),
-  todayCalories: document.querySelector("#todayCalories"),
-  weightDelta: document.querySelector("#weightDelta"),
+  todayEarned: document.querySelector("#todayEarned"),
+  todaySpent: document.querySelector("#todaySpent"),
   levelLabel: document.querySelector("#levelLabel"),
   xpLabel: document.querySelector("#xpLabel"),
   levelTitle: document.querySelector("#levelTitle"),
   selectedTitle: document.querySelector("#selectedTitle"),
   weeklySteps: document.querySelector("#weeklySteps"),
-  weeklyWorkout: document.querySelector("#weeklyWorkout"),
-  todayFoodCount: document.querySelector("#todayFoodCount"),
-  todayFoodCalories: document.querySelector("#todayFoodCalories"),
   incomeStatus: document.querySelector("#incomeStatus"),
   motivationText: document.querySelector("#motivationText"),
   activityForm: document.querySelector("#activityForm"),
@@ -634,32 +630,23 @@ function addXp(amount, source, sourceId) {
 
 function renderDashboard() {
   const today = getTodayStats();
-  const food = getTodayFoodStats();
   const week = getWeeklyStats();
-  const weight = getWeightStats();
   const level = getLevel();
 
   el.pointBalance.textContent = formatPoints(state.points);
   el.savingsBalance.textContent = formatPoints(state.savings);
-  el.xpBalance.textContent = formatXp(state.xp);
-  el.todayCalories.textContent = `${today.calories.toLocaleString("ko-KR")} kcal`;
-  el.weightDelta.textContent = Number.isFinite(weight.delta30)
-    ? `${weight.delta30 > 0 ? "+" : ""}${weight.delta30.toFixed(1)}kg`
-    : "-";
-  el.weightDelta.className = Number.isFinite(weight.delta30) && weight.delta30 < 0 ? "positive" : "";
+  el.todayEarned.textContent = `+${formatPoints(today.earned)}`;
+  el.todaySpent.textContent = `-${formatPoints(today.spent)}`;
   el.levelLabel.textContent = `Lv. ${level.level}`;
   el.xpLabel.textContent = formatXp(state.xp);
   el.levelTitle.textContent = level.title;
   el.selectedTitle.textContent = getSelectedTitleName();
   el.weeklySteps.textContent = `${Math.round(week.steps).toLocaleString("ko-KR")}보`;
-  el.weeklyWorkout.textContent = formatPoints(week.exercisePoints);
-  el.todayFoodCount.textContent = `${food.count.toLocaleString("ko-KR")}단위`;
-  el.todayFoodCalories.textContent = `${food.calories.toLocaleString("ko-KR")} kcal`;
   el.weeklySummary.textContent = `이번 주 ${Math.round(week.steps).toLocaleString("ko-KR")}보 · 운동 ${formatPoints(week.exercisePoints)}`;
   el.incomeStatus.textContent = `예상 일요일 인컴 +${Math.floor(state.savings / 10).toLocaleString("ko-KR")}XP`;
   el.motivationText.textContent = state.points > 0
-    ? "포인트는 지갑에, 자기통제는 저축에, 성장은 XP에 쌓입니다."
-    : "오늘의 움직임을 첫 수입으로 기록해보세요.";
+    ? "계획은 직접 세우고, 기록은 자산으로 남깁니다."
+    : "오늘 살아낸 일을 하나 기록해보세요.";
 }
 
 function renderActivityForm() {
@@ -714,20 +701,24 @@ function renderAchievements() {
   el.achievementList.innerHTML = achievements.map((achievement) => {
     const done = achievement.isComplete();
     const claimed = state.claimedAchievements.includes(achievement.id);
-    const hiddenLocked = achievement.hidden && !done && !claimed;
-    const title = hiddenLocked ? "숨겨진 업적" : achievement.title;
-    const meta = hiddenLocked ? "조건을 만족하면 정체가 드러납니다." : `칭호: ${achievement.titleName}`;
+    const discovered = done || claimed;
+    const title = claimed ? achievement.title : done ? "새 업적 발견" : "숨겨진 업적";
+    const meta = claimed
+      ? `칭호: ${achievement.titleName}`
+      : done
+        ? "기록이 쌓여 새로운 칭호가 열렸습니다."
+        : "살아낸 기록이 쌓이면 언젠가 드러납니다.";
     return `
-      <article class="rpg-item">
+      <article class="rpg-item ${discovered ? "" : "locked-discovery"}">
         <div class="item-row">
           <div>
             <div class="item-title">${title}</div>
             <div class="item-meta">${meta}</div>
           </div>
-          <span class="reward">+${achievement.xp}XP</span>
+          <span class="reward">${discovered ? `+${achievement.xp}XP` : "???"}</span>
         </div>
         <button class="item-button" type="button" data-achievement-id="${achievement.id}" ${done && !claimed ? "" : "disabled"}>
-          ${claimed ? "획득 완료" : done ? "업적 수령" : "잠김"}
+          ${claimed ? "획득 완료" : done ? "칭호 받기" : "미발견"}
         </button>
       </article>
     `;
@@ -791,7 +782,7 @@ function renderShop() {
       <article class="rpg-item shop-card">
         <div>
           <div class="item-title">${item.title}</div>
-          <div class="item-meta">${item.category} · ${item.unit}당 ${unitCost} · ${item.kcalPerUnit} kcal</div>
+          <div class="item-meta">${item.category} · ${item.unit}당 ${unitCost}</div>
         </div>
         <div class="quantity-control" aria-label="${item.title} 수량 선택">
           <button class="quantity-button" type="button" data-quantity-action="decrease" data-item-id="${item.id}" ${quantity <= 1 ? "disabled" : ""}>-</button>
@@ -799,7 +790,7 @@ function renderShop() {
           <button class="quantity-button" type="button" data-quantity-action="increase" data-item-id="${item.id}">+</button>
         </div>
         <div class="shop-total">
-          <span>총 ${purchase.estimatedCalories.toLocaleString("ko-KR")} kcal</span>
+          <span>참고 ${purchase.estimatedCalories.toLocaleString("ko-KR")} kcal</span>
           <strong class="cost">${totalCost}</strong>
         </div>
         <button class="item-button buy" type="button" data-item-id="${item.id}" ${canBuy ? "" : "disabled"}>${canBuy ? "구매" : "포인트 부족"}</button>
@@ -1303,12 +1294,26 @@ function applyAvailableUpdate() {
 }
 
 function bindEvents() {
+  function activateTab(tabName) {
+    const button = document.querySelector(`.tab[data-tab="${tabName}"]`);
+    const panel = document.querySelector(`#${tabName}Panel`);
+    if (!button || !panel) return;
+    document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
+    document.querySelectorAll(".panel").forEach((item) => item.classList.remove("active"));
+    button.classList.add("active");
+    panel.classList.add("active");
+  }
+
   document.querySelectorAll(".tab").forEach((button) => {
     button.addEventListener("click", () => {
-      document.querySelectorAll(".tab").forEach((tab) => tab.classList.remove("active"));
-      document.querySelectorAll(".panel").forEach((panel) => panel.classList.remove("active"));
-      button.classList.add("active");
-      document.querySelector(`#${button.dataset.tab}Panel`).classList.add("active");
+      activateTab(button.dataset.tab);
+    });
+  });
+
+  document.querySelectorAll("[data-jump-tab]").forEach((button) => {
+    button.addEventListener("click", () => {
+      activateTab(button.dataset.jumpTab);
+      document.querySelector(".tab-bar")?.scrollIntoView({ behavior: "smooth", block: "start" });
     });
   });
 

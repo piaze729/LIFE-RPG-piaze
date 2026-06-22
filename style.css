@@ -218,6 +218,58 @@ h3 {
   color: #dbeafe;
 }
 
+.quick-actions {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 12px;
+}
+
+.quick-actions button {
+  min-height: 46px;
+  border-radius: 8px;
+  color: #06111d;
+  background: var(--green);
+  font-weight: 900;
+}
+
+.quick-actions button + button {
+  background: var(--gold);
+}
+
+.today-flow {
+  display: grid;
+  grid-template-columns: repeat(2, minmax(0, 1fr));
+  gap: 10px;
+  margin-top: 10px;
+}
+
+.today-flow div {
+  min-width: 0;
+  padding: 12px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(7, 11, 19, 0.38);
+}
+
+.today-flow span {
+  display: block;
+  color: var(--muted);
+  font-size: 0.82rem;
+  font-weight: 800;
+}
+
+.today-flow strong {
+  display: block;
+  margin-top: 5px;
+  font-size: 1.1rem;
+  color: var(--green);
+}
+
+.today-flow div + div strong {
+  color: var(--red);
+}
+
 .stat-grid {
   display: grid;
   grid-template-columns: repeat(2, minmax(0, 1fr));
@@ -446,6 +498,11 @@ h3 {
   cursor: not-allowed;
   color: var(--muted);
   background: rgba(255, 255, 255, 0.08);
+}
+
+.locked-discovery {
+  border-style: dashed;
+  opacity: 0.74;
 }
 
 .weight-form {

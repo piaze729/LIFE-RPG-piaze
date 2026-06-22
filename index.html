@@ -14,7 +14,7 @@
   <body>
     <div class="app-shell">
       <div class="app-meta" aria-label="앱 버전과 업데이트 상태">
-        <span id="appVersion">Life RPG Point v0.2.8</span>
+        <span id="appVersion">Life RPG Point v0.2.9</span>
         <button id="forceRefreshButton" class="text-button" type="button">업데이트 확인</button>
       </div>
 
@@ -48,17 +48,29 @@
             <p id="motivationText">움직임은 수입이고, 소비는 선택입니다.</p>
           </div>
 
+          <div class="quick-actions" aria-label="빠른 실행">
+            <button type="button" data-jump-tab="quests">활동 기록</button>
+            <button type="button" data-jump-tab="shop">보상 사용</button>
+          </div>
+
+          <div class="today-flow" aria-label="오늘 포인트 흐름">
+            <div>
+              <span>오늘 획득</span>
+              <strong id="todayEarned">+0 P</strong>
+            </div>
+            <div>
+              <span>오늘 사용</span>
+              <strong id="todaySpent">-0 P</strong>
+            </div>
+          </div>
+
           <div class="stat-grid">
             <article>
               <span>저축 포인트</span>
               <strong id="savingsBalance">0 P</strong>
             </article>
             <article>
-              <span>경험치</span>
-              <strong id="xpBalance">0 XP</strong>
-            </article>
-            <article>
-              <span>레벨명</span>
+              <span>현재 레벨</span>
               <strong id="levelTitle">태어난 김에 사는 사람</strong>
             </article>
             <article>
@@ -69,35 +81,15 @@
               <span>이번 주 걸음</span>
               <strong id="weeklySteps">0보</strong>
             </article>
-            <article>
-              <span>운동 포인트</span>
-              <strong id="weeklyWorkout">0 P</strong>
-            </article>
-            <article>
-              <span>오늘 소모</span>
-              <strong id="todayCalories">0 kcal</strong>
-            </article>
-            <article>
-              <span>오늘 먹은 음식</span>
-              <strong id="todayFoodCount">0단위</strong>
-            </article>
-            <article>
-              <span>오늘 섭취</span>
-              <strong id="todayFoodCalories">0 kcal</strong>
-            </article>
-            <article>
-              <span>체중 변화</span>
-              <strong id="weightDelta">-</strong>
-            </article>
           </div>
         </section>
 
         <nav class="tab-bar" aria-label="주요 화면">
-          <button class="tab active" type="button" data-tab="quests">활동</button>
-          <button class="tab" type="button" data-tab="shop">상점</button>
+          <button class="tab active" type="button" data-tab="quests">기록</button>
+          <button class="tab" type="button" data-tab="shop">보상</button>
           <button class="tab" type="button" data-tab="growth">성장</button>
           <button class="tab" type="button" data-tab="weight">체중</button>
-          <button class="tab" type="button" data-tab="logs">기록</button>
+          <button class="tab" type="button" data-tab="logs">장부</button>
         </nav>
 
         <section class="panel active" id="questsPanel" aria-labelledby="questsTitle">
@@ -107,7 +99,7 @@
           </div>
 
           <section class="subsection" aria-labelledby="activityRecordTitle">
-            <h3 id="activityRecordTitle">활동 직접 기록</h3>
+            <h3 id="activityRecordTitle">내가 한 일 기록</h3>
             <form id="activityForm" class="activity-form">
               <label>
                 활동
@@ -123,12 +115,12 @@
           </section>
 
           <section class="subsection" aria-labelledby="weeklyGoalsTitle">
-            <h3 id="weeklyGoalsTitle">주간 퀘스트</h3>
+            <h3 id="weeklyGoalsTitle">주간 보너스</h3>
             <div id="weeklyGoalList" class="item-list"></div>
           </section>
 
           <section class="subsection" aria-labelledby="monthlyGoalsTitle">
-            <h3 id="monthlyGoalsTitle">월간 퀘스트</h3>
+            <h3 id="monthlyGoalsTitle">월간 보너스</h3>
             <div id="monthlyGoalList" class="item-list"></div>
           </section>
 
@@ -138,15 +130,15 @@
           </section>
 
           <section class="subsection" aria-labelledby="achievementsTitle">
-            <h3 id="achievementsTitle">업적</h3>
+            <h3 id="achievementsTitle">발견한 업적</h3>
             <div id="achievementList" class="item-list"></div>
           </section>
         </section>
 
         <section class="panel" id="shopPanel" aria-labelledby="shopTitle">
           <div class="section-heading">
-            <h2 id="shopTitle">상점</h2>
-            <span class="pill">음식은 보상 아이템</span>
+            <h2 id="shopTitle">보상 사용</h2>
+            <span class="pill">포인트로 선택</span>
           </div>
           <div id="shopFilters" class="filter-row" aria-label="상점 카테고리"></div>
           <div id="shopList" class="item-list"></div>
