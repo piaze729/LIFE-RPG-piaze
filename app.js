@@ -51,14 +51,16 @@ const weeklyGoals = [
   { id: "weekly_steps_10000", title: "주간 10,000보", metric: "steps", target: 10000, xp: 100 },
   { id: "weekly_steps_30000", title: "주간 30,000보", metric: "steps", target: 30000, xp: 300 },
   { id: "weekly_steps_50000", title: "주간 50,000보", metric: "steps", target: 50000, xp: 500 },
-  { id: "weekly_workout_3", title: "운동 3회", metric: "workout_sessions", target: 3, xp: 250 },
-  { id: "weekly_workout_5", title: "운동 5회", metric: "workout_sessions", target: 5, xp: 500 }
+  { id: "weekly_cardio_volume_25", title: "주간 유산소 환산 25km", metric: "cardio_volume", target: 25, xp: 500 },
+  { id: "weekly_strength_points_700", title: "주간 근력 포인트 700P", metric: "strength_points", target: 700, xp: 600 },
+  { id: "weekly_recovery_90", title: "주간 회복 90분", metric: "recovery_minutes", target: 90, xp: 300 }
 ];
 
 const monthlyGoals = [
   { id: "monthly_steps_150000", title: "월간 150,000보", metric: "steps", target: 150000, xp: 1500 },
   { id: "monthly_steps_300000", title: "월간 300,000보", metric: "steps", target: 300000, xp: 3500 },
-  { id: "monthly_workout_15", title: "운동 15회", metric: "workout_sessions", target: 15, xp: 2000 }
+  { id: "monthly_cardio_volume_100", title: "월간 유산소 환산 100km", metric: "cardio_volume", target: 100, xp: 3000 },
+  { id: "monthly_strength_points_2500", title: "월간 근력 포인트 2,500P", metric: "strength_points", target: 2500, xp: 3000 }
 ];
 
 const achievements = [
@@ -66,7 +68,7 @@ const achievements = [
   { id: "first_10000_steps", title: "첫 10,000보", xp: 200, titleName: "만보 정복자", isComplete: () => getTotalMetric("steps") >= 10000 },
   { id: "total_50000_steps", title: "누적 50,000보", xp: 500, titleName: "오만보 기사", isComplete: () => getTotalMetric("steps") >= 50000 },
   { id: "total_100000_steps", title: "누적 100,000보", xp: 1000, titleName: "십만보 군주", isComplete: () => getTotalMetric("steps") >= 100000 },
-  { id: "workout_20_sessions", title: "운동 20회", xp: 700, titleName: "철인", isComplete: () => getTotalMetric("workout_sessions") >= 20 },
+  { id: "workout_20_sessions", title: "근력 포인트 5,000P", xp: 700, titleName: "철인", isComplete: () => getTotalMetric("strength_points") >= 5000 },
   { id: "weight_7_logs", title: "체중 기록 7회", xp: 300, titleName: "불굴의 의지", isComplete: () => state.weightLogs.length >= 7 },
   { id: "first_commute", title: "첫 출근 기록", xp: 120, titleName: "출근 생존자", hidden: true, isComplete: () => getTotalMetric("commute_count") >= 1 },
   { id: "study_10_hours", title: "순공 10시간", xp: 400, titleName: "몰입하는 사람", hidden: true, isComplete: () => getTotalMetric("study_hours") >= 10 },
@@ -95,33 +97,33 @@ const titleSets = [
   }
 ];
 
+const cardioActivityIds = ["running_km", "cycling_km", "jump_rope_minutes", "swimming_minutes", "hiking_minutes"];
+const strengthActivityIds = [
+  "squat_count",
+  "pushup_count",
+  "pullup_count",
+  "lunge_count",
+  "situp_count",
+  "burpee_count",
+  "mountain_climber_count",
+  "plank_minutes",
+  "stairs_floors"
+];
+const recoveryActivityIds = ["stretching_minutes", "yoga_minutes"];
+const exerciseActivityIds = [...new Set([...cardioActivityIds, ...strengthActivityIds, ...recoveryActivityIds])];
+
 const setBonuses = [
   {
-    id: "balanced_training_week",
+    id: "balanced_training_volume_week",
     title: "밸런스 운동 세트",
-    description: "유산소 3회 + 근력 4회 + 스트레칭 40분",
+    description: "유산소 환산 25km + 근력 포인트 700P + 회복 90분",
     rewardPoints: 700,
     period: "weekly",
-    activityTypeIds: [
-      "running_km",
-      "cycling_km",
-      "jump_rope_minutes",
-      "swimming_minutes",
-      "hiking_minutes",
-      "squat_count",
-      "pushup_count",
-      "pullup_count",
-      "lunge_count",
-      "situp_count",
-      "burpee_count",
-      "mountain_climber_count",
-      "plank_minutes",
-      "stretching_minutes"
-    ],
+    activityTypeIds: exerciseActivityIds,
     requirements: [
-      { metric: "cardio_sessions", target: 3, label: "유산소" },
-      { metric: "strength_sessions", target: 4, label: "근력" },
-      { metric: "stretching_minutes", target: 40, label: "스트레칭" }
+      { metric: "cardio_volume", target: 25, label: "유산소 환산" },
+      { metric: "strength_points", target: 700, label: "근력 포인트" },
+      { metric: "recovery_minutes", target: 90, label: "회복" }
     ]
   },
   {
@@ -147,7 +149,7 @@ const setBonuses = [
     activityTypeIds: ["steps", "running_km", "cycling_km", "jump_rope_minutes", "swimming_minutes", "hiking_minutes"],
     requirements: [
       { metric: "steps", target: 70000, label: "걷기" },
-      { metric: "cardio_volume", target: 25, label: "유산소 볼륨" }
+      { metric: "cardio_volume", target: 25, label: "유산소 환산" }
     ]
   },
   {
@@ -379,24 +381,13 @@ function getLogsInRange(start) {
 }
 
 function isWorkoutLog(log) {
-  return [
-    "running_km",
-    "cycling_km",
-    "jump_rope_minutes",
-    "swimming_minutes",
-    "hiking_minutes",
-    "stretching_minutes",
-    "yoga_minutes",
-    "squat_count",
-    "pushup_count",
-    "pullup_count",
-    "lunge_count",
-    "situp_count",
-    "burpee_count",
-    "mountain_climber_count",
-    "plank_minutes",
-    "stairs_floors"
-  ].includes(log.activityTypeId);
+  return exerciseActivityIds.includes(log.activityTypeId);
+}
+
+function getActivityPointsFor(logs, activityTypeIds) {
+  return logs
+    .filter((log) => activityTypeIds.includes(log.activityTypeId))
+    .reduce((sum, log) => sum + log.points, 0);
 }
 
 function getMetric(metric, logs) {
@@ -410,13 +401,18 @@ function getMetric(metric, logs) {
     return logs.filter(isWorkoutLog).length;
   }
   if (metric === "cardio_sessions") {
-    return logs.filter((log) => [
-      "running_km",
-      "cycling_km",
-      "jump_rope_minutes",
-      "swimming_minutes",
-      "hiking_minutes"
-    ].includes(log.activityTypeId)).length;
+    return logs.filter((log) => cardioActivityIds.includes(log.activityTypeId)).length;
+  }
+  if (metric === "exercise_points") {
+    return getActivityPointsFor(logs, exerciseActivityIds);
+  }
+  if (metric === "strength_points") {
+    return getActivityPointsFor(logs, strengthActivityIds);
+  }
+  if (metric === "recovery_minutes") {
+    return logs
+      .filter((log) => recoveryActivityIds.includes(log.activityTypeId))
+      .reduce((sum, log) => sum + log.value, 0);
   }
   if (metric === "cardio_distance") {
     return logs
@@ -437,16 +433,7 @@ function getMetric(metric, logs) {
     return distance + jumpRopeEquivalent + swimmingEquivalent + hikingEquivalent;
   }
   if (metric === "strength_sessions") {
-    return logs.filter((log) => [
-      "squat_count",
-      "pushup_count",
-      "pullup_count",
-      "lunge_count",
-      "situp_count",
-      "burpee_count",
-      "mountain_climber_count",
-      "plank_minutes"
-    ].includes(log.activityTypeId)).length;
+    return logs.filter((log) => strengthActivityIds.includes(log.activityTypeId)).length;
   }
   if (metric === "squat_count") {
     return logs.filter((log) => log.activityTypeId === "squat_count").reduce((sum, log) => sum + log.value, 0);
@@ -529,7 +516,7 @@ function getWeeklyStats() {
   const logs = getLogsInRange(getWeekStart());
   return {
     steps: getMetric("steps", logs),
-    workoutSessions: getMetric("workout_sessions", logs),
+    exercisePoints: getMetric("exercise_points", logs),
     calories: logs.reduce((sum, log) => sum + log.estimatedCalories, 0)
   };
 }
@@ -579,8 +566,9 @@ function getSetBonusLogs(setBonus) {
 }
 
 function formatRequirementProgress(metric, value) {
-  if (["workout_minutes", "plank_minutes", "stretching_minutes", "yoga_minutes"].includes(metric)) return `${Math.floor(value)}분`;
+  if (["workout_minutes", "plank_minutes", "stretching_minutes", "yoga_minutes", "recovery_minutes"].includes(metric)) return `${Math.floor(value)}분`;
   if (["cardio_distance", "cardio_volume"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}km`;
+  if (["exercise_points", "strength_points"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}P`;
   if (["steps"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}보`;
   if (["stairs_floors"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}층`;
   if ([
@@ -631,10 +619,10 @@ function renderDashboard() {
   el.levelTitle.textContent = level.title;
   el.selectedTitle.textContent = getSelectedTitleName();
   el.weeklySteps.textContent = `${Math.round(week.steps).toLocaleString("ko-KR")}보`;
-  el.weeklyWorkout.textContent = `${week.workoutSessions.toLocaleString("ko-KR")}회`;
+  el.weeklyWorkout.textContent = formatPoints(week.exercisePoints);
   el.todayFoodCount.textContent = `${food.count.toLocaleString("ko-KR")}단위`;
   el.todayFoodCalories.textContent = `${food.calories.toLocaleString("ko-KR")} kcal`;
-  el.weeklySummary.textContent = `이번 주 ${Math.round(week.steps).toLocaleString("ko-KR")}보 · 운동 ${week.workoutSessions}회`;
+  el.weeklySummary.textContent = `이번 주 ${Math.round(week.steps).toLocaleString("ko-KR")}보 · 운동 ${formatPoints(week.exercisePoints)}`;
   el.incomeStatus.textContent = `예상 일요일 인컴 +${Math.floor(state.savings / 10).toLocaleString("ko-KR")}XP`;
   el.motivationText.textContent = state.points > 0
     ? "포인트는 지갑에, 자기통제는 저축에, 성장은 XP에 쌓입니다."
