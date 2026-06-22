@@ -18,10 +18,11 @@ const activityTypes = [
   { id: "stairs_floors", category: "생활 활동", label: "계단", unit: "층", pointsPerUnit: 5, kcalPerUnit: 3 },
   { id: "cleaning_minutes", category: "생활 활동", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 },
   { id: "commute", category: "생활/자기계발", label: "출근", unit: "회", pointsPerUnit: 100, kcalPerUnit: 0 },
-  { id: "study_hours", category: "생활/자기계발", label: "순공 시간", unit: "시간", pointsPerUnit: 50, kcalPerUnit: 0 },
-  { id: "reading_minutes", category: "생활/자기계발", label: "독서", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 },
-  { id: "language_minutes", category: "생활/자기계발", label: "언어 공부", unit: "분", pointsPerUnit: 1.2, kcalPerUnit: 0 },
-  { id: "coding_minutes", category: "생활/자기계발", label: "코딩/프로젝트", unit: "분", pointsPerUnit: 1.2, kcalPerUnit: 0 },
+  { id: "study_hours", category: "생활/자기계발", label: "순공 시간", unit: "시간", pointsPerUnit: 30, kcalPerUnit: 0, tieredFocus: true },
+  { id: "reading_minutes", category: "생활/자기계발", label: "독서", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
+  { id: "language_minutes", category: "생활/자기계발", label: "외국어 공부", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
+  { id: "coding_minutes", category: "생활/자기계발", label: "코딩/프로젝트", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
+  { id: "instrument_minutes", category: "생활/자기계발", label: "악기 연습", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
   { id: "journaling_minutes", category: "생활/자기계발", label: "일기/회고", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 },
   { id: "prayer_minutes", category: "생활/자기계발", label: "기도/묵상", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 }
 ];
@@ -125,9 +126,11 @@ const developmentActivityIds = [
   "reading_minutes",
   "language_minutes",
   "coding_minutes",
+  "instrument_minutes",
   "journaling_minutes",
   "prayer_minutes"
 ];
+const tieredFocusActivityIds = ["study_hours", "reading_minutes", "language_minutes", "coding_minutes", "instrument_minutes"];
 
 const setBonuses = [
   {
@@ -212,7 +215,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.2.9";
+const APP_VERSION = "v0.3.0";
 const WITHDRAW_FEE_RATE = 0.15;
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
@@ -347,11 +350,57 @@ function getActivityType(activityTypeId) {
   return activityTypes.find((activity) => activity.id === activityTypeId);
 }
 
-function calculateActivity(activityTypeId, rawValue) {
+function getActivityHours(activity, value) {
+  if (!activity) return 0;
+  return activity.unit === "시간" ? value : value / 60;
+}
+
+function calculateTieredFocusPoints(startHours, addedHours) {
+  const tiers = [
+    { until: 1, pointsPerHour: 30 },
+    { until: 2, pointsPerHour: 45 },
+    { until: Infinity, pointsPerHour: 60 }
+  ];
+  let remaining = addedHours;
+  let cursor = startHours;
+  let points = 0;
+
+  for (const tier of tiers) {
+    if (remaining <= 0) break;
+    if (cursor >= tier.until) continue;
+    const available = tier.until - cursor;
+    const used = Math.min(remaining, available);
+    points += used * tier.pointsPerHour;
+    cursor += used;
+    remaining -= used;
+  }
+
+  return Math.round(points);
+}
+
+function getActivityHoursOnDate(activityTypeId, date) {
+  const activity = getActivityType(activityTypeId);
+  return state.activityLogs
+    .filter((log) => log.date === date && log.activityTypeId === activityTypeId)
+    .reduce((sum, log) => sum + getActivityHours(activity, log.value), 0);
+}
+
+function calculateActivity(activityTypeId, rawValue, date = todayKey()) {
   const activity = getActivityType(activityTypeId);
   const value = Number(rawValue);
   if (!activity || !Number.isFinite(value) || value <= 0) {
     return { activity, value: 0, points: 0, estimatedCalories: 0 };
+  }
+
+  if (tieredFocusActivityIds.includes(activityTypeId)) {
+    const startHours = getActivityHoursOnDate(activityTypeId, date);
+    const addedHours = getActivityHours(activity, value);
+    return {
+      activity,
+      value,
+      points: calculateTieredFocusPoints(startHours, addedHours),
+      estimatedCalories: 0
+    };
   }
 
   return {
@@ -664,7 +713,8 @@ function renderActivityForm() {
 function updateActivityPreview() {
   const { activity, points, estimatedCalories } = calculateActivity(el.activityTypeSelect.value, el.activityValueInput.value);
   el.activityValueInput.placeholder = activity?.id === "steps" ? "7843" : `수치 입력 (${activity?.unit || ""})`;
-  el.activityPreview.textContent = `예상 +${points}P / ${estimatedCalories}kcal`;
+  const tierText = activity?.tieredFocus ? " · 오늘 누적 30/45/60P" : "";
+  el.activityPreview.textContent = `예상 +${points}P / ${estimatedCalories}kcal${tierText}`;
 }
 
 function renderGoalList(target, goals, periodId, claimedIds, logs) {
@@ -1028,7 +1078,8 @@ function renderAll() {
 }
 
 function recordActivity() {
-  const result = calculateActivity(el.activityTypeSelect.value, el.activityValueInput.value);
+  const date = todayKey();
+  const result = calculateActivity(el.activityTypeSelect.value, el.activityValueInput.value, date);
   if (!result.activity || result.value <= 0 || result.points <= 0) {
     showToast("활동 수치를 입력해주세요.");
     return;
@@ -1036,7 +1087,7 @@ function recordActivity() {
 
   const log = {
     id: `log_${Date.now()}`,
-    date: todayKey(),
+    date,
     createdAt: getDateTime(),
     activityTypeId: result.activity.id,
     value: result.value,
