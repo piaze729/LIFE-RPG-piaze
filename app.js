@@ -212,7 +212,8 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.2.7";
+const APP_VERSION = "v0.2.8";
+const WITHDRAW_FEE_RATE = 0.15;
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
 let state = loadState();
@@ -831,7 +832,9 @@ function renderGrowth() {
     date: log.date,
     createdAt: log.createdAt,
     title: log.type === "withdraw" ? "포인트 출금" : "포인트 저축",
-    detail: log.type === "withdraw" ? "저축에서 지갑으로 이동" : "지갑에서 저축으로 이동",
+    detail: log.type === "withdraw"
+      ? `지갑 +${(log.received ?? log.amount).toLocaleString("ko-KR")}P · 수수료 ${(log.fee || 0).toLocaleString("ko-KR")}P`
+      : "지갑에서 저축으로 이동",
     amount: `${log.type === "withdraw" ? "-" : "+"}${log.amount.toLocaleString("ko-KR")}P`
   }));
   const incomeEntries = state.weeklyIncomeLogs.map((log) => ({
@@ -871,9 +874,11 @@ function updateSavingsPreview() {
 function updateWithdrawPreview() {
   const amount = Math.max(0, Number(el.withdrawInput.value) || 0);
   const withdrawAmount = Math.min(amount, state.savings);
-  const projectedWallet = state.points + withdrawAmount;
+  const fee = Math.ceil(withdrawAmount * WITHDRAW_FEE_RATE);
+  const received = Math.max(0, withdrawAmount - fee);
+  const projectedWallet = state.points + received;
   const projectedSavings = state.savings - withdrawAmount;
-  el.withdrawPreview.textContent = `출금 후 지갑 ${formatPoints(projectedWallet)} · 저축 ${formatPoints(projectedSavings)}`;
+  el.withdrawPreview.textContent = `입금 ${formatPoints(received)} · 수수료 ${formatPoints(fee)} · 출금 후 지갑 ${formatPoints(projectedWallet)} · 저축 ${formatPoints(projectedSavings)}`;
 }
 
 function renderWeightLogs() {
@@ -985,8 +990,12 @@ function renderLogs() {
     date: log.date,
     createdAt: log.createdAt,
     title: log.type === "withdraw" ? "저축 출금" : "저축",
-    detail: log.type === "withdraw" ? "저축에서 지갑으로 이동" : "지갑에서 저축으로 이동",
-    amount: `${log.type === "withdraw" ? "+" : "-"}${log.amount}P`,
+    detail: log.type === "withdraw"
+      ? `요청 ${log.amount.toLocaleString("ko-KR")}P · 수수료 ${(log.fee || 0).toLocaleString("ko-KR")}P`
+      : "지갑에서 저축으로 이동",
+    amount: log.type === "withdraw"
+      ? `+${(log.received ?? log.amount).toLocaleString("ko-KR")}P`
+      : `-${log.amount.toLocaleString("ko-KR")}P`,
     className: log.type === "withdraw" ? "positive" : "negative"
   }));
   const setBonusEntries = state.setBonusLogs.map((log) => ({
@@ -1126,13 +1135,23 @@ function withdrawSavings() {
     return;
   }
 
+  const fee = Math.ceil(amount * WITHDRAW_FEE_RATE);
+  const received = Math.max(0, amount - fee);
   state.savings -= amount;
-  state.points += amount;
-  state.savingsLogs.push({ id: `savings_${Date.now()}`, type: "withdraw", date: todayKey(), createdAt: getDateTime(), amount });
+  state.points += received;
+  state.savingsLogs.push({
+    id: `savings_${Date.now()}`,
+    type: "withdraw",
+    date: todayKey(),
+    createdAt: getDateTime(),
+    amount,
+    fee,
+    received
+  });
   saveState();
   el.withdrawInput.value = "";
   renderAll();
-  showToast(`${amount.toLocaleString("ko-KR")}P를 지갑으로 꺼냈습니다.`);
+  showToast(`출금 ${amount.toLocaleString("ko-KR")}P · 수수료 ${fee.toLocaleString("ko-KR")}P · 입금 ${received.toLocaleString("ko-KR")}P`);
 }
 
 function runWeeklyIncome(manual = false, force = false) {
