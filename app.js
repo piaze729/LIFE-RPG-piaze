@@ -219,7 +219,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.3.2";
+const APP_VERSION = "v0.3.3";
 const WITHDRAW_FEE_RATE = 0.15;
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
@@ -1002,13 +1002,6 @@ function drawWeightChart() {
 }
 
 function renderLogs() {
-  const today = getTodayStats();
-  el.activitySummary.innerHTML = `
-    <div><span>오늘 획득</span><strong>${formatPoints(today.earned)}</strong></div>
-    <div><span>오늘 사용</span><strong>${formatPoints(today.spent)}</strong></div>
-    <div><span>오늘 소모</span><strong>${today.calories.toLocaleString("ko-KR")} kcal</strong></div>
-  `;
-
   const activityEntries = state.activityLogs.map((log) => {
     const activity = getActivityType(log.activityTypeId);
     return {
@@ -1018,6 +1011,12 @@ function renderLogs() {
       createdAt: log.createdAt,
       title: activity?.label || "활동 기록",
       detail: `${log.value.toLocaleString("ko-KR")}${log.unit} · ${log.estimatedCalories} kcal`,
+      earned: log.points,
+      spent: 0,
+      saved: 0,
+      withdrawn: 0,
+      fee: 0,
+      calories: log.estimatedCalories,
       amount: `+${log.points}P`,
       className: "positive"
     };
@@ -1028,6 +1027,12 @@ function renderLogs() {
     createdAt: log.createdAt,
     title: log.title || shopItems.find((item) => item.id === log.itemId)?.title || "상점 구매",
     detail: log.quantity ? `${formatLogQuantity(log)} · ${log.estimatedCalories.toLocaleString("ko-KR")} kcal` : "상점 구매",
+    earned: 0,
+    spent: getPurchaseCost(log),
+    saved: 0,
+    withdrawn: 0,
+    fee: 0,
+    calories: 0,
     amount: `-${getPurchaseCost(log)}P`,
     className: "negative"
   }));
@@ -1039,6 +1044,12 @@ function renderLogs() {
     detail: log.type === "withdraw"
       ? `요청 ${log.amount.toLocaleString("ko-KR")}P · 수수료 ${(log.fee || 0).toLocaleString("ko-KR")}P`
       : "지갑에서 저축으로 이동",
+    earned: 0,
+    spent: 0,
+    saved: log.type === "withdraw" ? 0 : log.amount,
+    withdrawn: log.type === "withdraw" ? (log.received ?? log.amount) : 0,
+    fee: log.type === "withdraw" ? (log.fee || 0) : 0,
+    calories: 0,
     amount: log.type === "withdraw"
       ? `+${(log.received ?? log.amount).toLocaleString("ko-KR")}P`
       : `-${log.amount.toLocaleString("ko-KR")}P`,
@@ -1050,20 +1061,90 @@ function renderLogs() {
     createdAt: log.createdAt,
     title: log.title,
     detail: "세트효과 보너스",
+    earned: log.rewardPoints,
+    spent: 0,
+    saved: 0,
+    withdrawn: 0,
+    fee: 0,
+    calories: 0,
     amount: `+${log.rewardPoints}P`,
     className: "positive"
   }));
-  const entries = [...activityEntries, ...purchaseEntries, ...savingsEntries, ...setBonusEntries].sort(byDateDesc).slice(0, 40);
+  const entries = [...activityEntries, ...purchaseEntries, ...savingsEntries, ...setBonusEntries].sort(byDateDesc);
+  const recentCutoff = new Date();
+  recentCutoff.setDate(recentCutoff.getDate() - 6);
+  recentCutoff.setHours(0, 0, 0, 0);
+  const recentEntries = entries.filter((entry) => new Date(entry.date) >= recentCutoff);
+  const recentSummary = recentEntries.reduce((sum, entry) => ({
+    earned: sum.earned + entry.earned,
+    spent: sum.spent + entry.spent,
+    saved: sum.saved + entry.saved,
+    withdrawn: sum.withdrawn + entry.withdrawn,
+    fee: sum.fee + entry.fee
+  }), { earned: 0, spent: 0, saved: 0, withdrawn: 0, fee: 0 });
 
-  el.logList.innerHTML = entries.length ? entries.map((entry) => `
-    <article class="log-item">
-      <div class="log-row">
-        <strong>${entry.title}</strong>
-        <strong class="${entry.className}">${entry.amount}</strong>
+  el.activitySummary.innerHTML = `
+    <div><span>최근 7일 획득</span><strong>${formatPoints(recentSummary.earned)}</strong></div>
+    <div><span>최근 7일 사용</span><strong>${formatPoints(recentSummary.spent)}</strong></div>
+    <div><span>저축</span><strong>${formatPoints(recentSummary.saved)}</strong></div>
+    <div><span>출금</span><strong>${formatPoints(recentSummary.withdrawn)}</strong></div>
+    <div><span>수수료</span><strong>${formatPoints(recentSummary.fee)}</strong></div>
+  `;
+
+  const grouped = entries.slice(0, 80).reduce((map, entry) => {
+    if (!map.has(entry.date)) {
+      map.set(entry.date, {
+        date: entry.date,
+        earned: 0,
+        spent: 0,
+        saved: 0,
+        withdrawn: 0,
+        fee: 0,
+        calories: 0,
+        entries: []
+      });
+    }
+    const day = map.get(entry.date);
+    day.earned += entry.earned;
+    day.spent += entry.spent;
+    day.saved += entry.saved;
+    day.withdrawn += entry.withdrawn;
+    day.fee += entry.fee;
+    day.calories += entry.calories;
+    day.entries.push(entry);
+    return map;
+  }, new Map());
+
+  const dayCards = [...grouped.values()].slice(0, 14);
+  el.logList.innerHTML = dayCards.length ? dayCards.map((day) => `
+    <article class="ledger-day">
+      <div class="ledger-day-head">
+        <div>
+          <strong>${day.date === todayKey() ? "오늘" : day.date}</strong>
+          <small>${day.entries.length}개 기록 · 소모 ${day.calories.toLocaleString("ko-KR")} kcal</small>
+        </div>
+        <strong class="${day.earned - day.spent >= 0 ? "positive" : "negative"}">${day.earned - day.spent >= 0 ? "+" : ""}${formatPoints(day.earned - day.spent)}</strong>
       </div>
-      <div class="log-row">
-        <small>${entry.date} · ${entry.detail}</small>
-        ${entry.kind === "activity" ? `<button class="delete-log-button" type="button" data-activity-log-id="${entry.id}">삭제</button>` : ""}
+      <div class="ledger-summary">
+        <span>획득 ${formatPoints(day.earned)}</span>
+        <span>사용 ${formatPoints(day.spent)}</span>
+        <span>저축 ${formatPoints(day.saved)}</span>
+        <span>출금 ${formatPoints(day.withdrawn)}</span>
+        <span>수수료 ${formatPoints(day.fee)}</span>
+      </div>
+      <div class="ledger-lines">
+        ${day.entries.map((entry) => `
+          <div class="ledger-line">
+            <div>
+              <strong>${entry.title}</strong>
+              <small>${entry.detail}</small>
+            </div>
+            <div class="ledger-line-side">
+              <strong class="${entry.className}">${entry.amount}</strong>
+              ${entry.kind === "activity" ? `<button class="delete-log-button" type="button" data-activity-log-id="${entry.id}">삭제</button>` : ""}
+            </div>
+          </div>
+        `).join("")}
       </div>
     </article>
   `).join("") : `<p class="empty-text" style="display:block">아직 기록이 없습니다.</p>`;

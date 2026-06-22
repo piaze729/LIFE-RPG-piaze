@@ -707,7 +707,7 @@ canvas {
 
 .summary-strip {
   display: grid;
-  grid-template-columns: repeat(3, 1fr);
+  grid-template-columns: repeat(auto-fit, minmax(112px, 1fr));
   gap: 8px;
   margin-bottom: 12px;
 }
@@ -732,6 +732,66 @@ canvas {
 
 .log-item {
   gap: 4px;
+}
+
+.ledger-day {
+  display: grid;
+  gap: 12px;
+  padding: 13px;
+  border: 1px solid var(--line);
+  border-radius: 8px;
+  background: rgba(31, 41, 55, 0.82);
+}
+
+.ledger-day-head,
+.ledger-line,
+.ledger-line-side {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 10px;
+}
+
+.ledger-day-head small,
+.ledger-line small {
+  display: block;
+  margin-top: 3px;
+  color: var(--muted);
+  font-size: 0.78rem;
+}
+
+.ledger-summary {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 6px;
+}
+
+.ledger-summary span {
+  padding: 5px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--muted);
+  background: rgba(7, 11, 19, 0.34);
+  font-size: 0.76rem;
+  font-weight: 800;
+}
+
+.ledger-lines {
+  display: grid;
+  gap: 8px;
+}
+
+.ledger-line {
+  padding-top: 8px;
+  border-top: 1px solid rgba(255, 255, 255, 0.08);
+}
+
+.ledger-line > div:first-child {
+  min-width: 0;
+}
+
+.ledger-line-side {
+  flex: 0 0 auto;
 }
 
 .positive {
