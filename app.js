@@ -15,6 +15,7 @@ const activityTypes = [
   { id: "burpee_count", category: "근력", label: "버피", unit: "개", pointsPerUnit: 2.5, kcalPerUnit: 1.5 },
   { id: "mountain_climber_count", category: "근력", label: "마운틴 클라이머", unit: "개", pointsPerUnit: 1.5, kcalPerUnit: 1 },
   { id: "plank_minutes", category: "근력", label: "플랭크", unit: "분", pointsPerUnit: 15, kcalPerUnit: 7 },
+  { id: "weight_volume_kg", category: "근력", label: "웨이트 볼륨", unit: "kg", pointsPerUnit: 0.04, kcalPerUnit: 0.015 },
   { id: "stairs_floors", category: "생활 활동", label: "계단", unit: "층", pointsPerUnit: 5, kcalPerUnit: 3 },
   { id: "cleaning_minutes", category: "생활 활동", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 },
   { id: "commute", category: "생활/자기계발", label: "출근", unit: "회", pointsPerUnit: 100, kcalPerUnit: 0 },
@@ -23,6 +24,7 @@ const activityTypes = [
   { id: "language_minutes", category: "생활/자기계발", label: "외국어 공부", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
   { id: "coding_minutes", category: "생활/자기계발", label: "코딩/프로젝트", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
   { id: "instrument_minutes", category: "생활/자기계발", label: "악기 연습", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
+  { id: "drawing_minutes", category: "생활/자기계발", label: "그림 그리기", unit: "분", pointsPerUnit: 0.5, kcalPerUnit: 0, tieredFocus: true },
   { id: "journaling_minutes", category: "생활/자기계발", label: "일기/회고", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 },
   { id: "prayer_minutes", category: "생활/자기계발", label: "기도/묵상", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 }
 ];
@@ -117,6 +119,7 @@ const strengthActivityIds = [
   "burpee_count",
   "mountain_climber_count",
   "plank_minutes",
+  "weight_volume_kg",
   "stairs_floors"
 ];
 const recoveryActivityIds = ["stretching_minutes", "yoga_minutes"];
@@ -127,10 +130,11 @@ const developmentActivityIds = [
   "language_minutes",
   "coding_minutes",
   "instrument_minutes",
+  "drawing_minutes",
   "journaling_minutes",
   "prayer_minutes"
 ];
-const tieredFocusActivityIds = ["study_hours", "reading_minutes", "language_minutes", "coding_minutes", "instrument_minutes"];
+const tieredFocusActivityIds = ["study_hours", "reading_minutes", "language_minutes", "coding_minutes", "instrument_minutes", "drawing_minutes"];
 
 const setBonuses = [
   {
@@ -215,7 +219,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.3.0";
+const APP_VERSION = "v0.3.1";
 const WITHDRAW_FEE_RATE = 0.15;
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
@@ -648,6 +652,7 @@ function formatRequirementProgress(metric, value) {
   if (["cardio_distance", "cardio_volume"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}km`;
   if (["exercise_points", "strength_points"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}P`;
   if (["steps"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}보`;
+  if (["weight_volume_kg"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}kg`;
   if (["stairs_floors"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}층`;
   if ([
     "squat_count",
