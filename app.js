@@ -1,24 +1,29 @@
 const activityTypes = [
-  { id: "steps", label: "걷기", unit: "보", pointsPerUnit: 0.02, kcalPerUnit: 0.035 },
-  { id: "running_km", label: "러닝", unit: "km", pointsPerUnit: 70, kcalPerUnit: 70 },
-  { id: "cycling_km", label: "자전거", unit: "km", pointsPerUnit: 25, kcalPerUnit: 25 },
-  { id: "jump_rope_minutes", label: "줄넘기", unit: "분", pointsPerUnit: 8, kcalPerUnit: 12 },
-  { id: "swimming_minutes", label: "수영", unit: "분", pointsPerUnit: 9, kcalPerUnit: 10 },
-  { id: "hiking_minutes", label: "등산", unit: "분", pointsPerUnit: 7, kcalPerUnit: 8 },
-  { id: "stretching_minutes", label: "스트레칭", unit: "분", pointsPerUnit: 3, kcalPerUnit: 2.5 },
-  { id: "yoga_minutes", label: "요가", unit: "분", pointsPerUnit: 4, kcalPerUnit: 3 },
-  { id: "squat_count", label: "스쿼트", unit: "개", pointsPerUnit: 0.8, kcalPerUnit: 0.5 },
-  { id: "pushup_count", label: "팔굽혀펴기", unit: "개", pointsPerUnit: 1.2, kcalPerUnit: 0.8 },
-  { id: "pullup_count", label: "턱걸이", unit: "개", pointsPerUnit: 3, kcalPerUnit: 1 },
-  { id: "lunge_count", label: "런지", unit: "개", pointsPerUnit: 0.9, kcalPerUnit: 0.6 },
-  { id: "situp_count", label: "윗몸일으키기", unit: "개", pointsPerUnit: 0.9, kcalPerUnit: 0.5 },
-  { id: "burpee_count", label: "버피", unit: "개", pointsPerUnit: 2.5, kcalPerUnit: 1.5 },
-  { id: "mountain_climber_count", label: "마운틴 클라이머", unit: "개", pointsPerUnit: 1.5, kcalPerUnit: 1 },
-  { id: "plank_minutes", label: "플랭크", unit: "분", pointsPerUnit: 15, kcalPerUnit: 7 },
-  { id: "stairs_floors", label: "계단", unit: "층", pointsPerUnit: 5, kcalPerUnit: 3 },
-  { id: "cleaning_minutes", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 },
-  { id: "commute", label: "출근", unit: "회", pointsPerUnit: 100, kcalPerUnit: 0 },
-  { id: "study_hours", label: "순공 시간", unit: "시간", pointsPerUnit: 50, kcalPerUnit: 0 }
+  { id: "steps", category: "걷기/이동", label: "걷기", unit: "보", pointsPerUnit: 0.02, kcalPerUnit: 0.035 },
+  { id: "running_km", category: "유산소", label: "러닝", unit: "km", pointsPerUnit: 70, kcalPerUnit: 70 },
+  { id: "cycling_km", category: "유산소", label: "자전거", unit: "km", pointsPerUnit: 25, kcalPerUnit: 25 },
+  { id: "jump_rope_minutes", category: "유산소", label: "줄넘기", unit: "분", pointsPerUnit: 8, kcalPerUnit: 12 },
+  { id: "swimming_minutes", category: "유산소", label: "수영", unit: "분", pointsPerUnit: 9, kcalPerUnit: 10 },
+  { id: "hiking_minutes", category: "유산소", label: "등산", unit: "분", pointsPerUnit: 7, kcalPerUnit: 8 },
+  { id: "stretching_minutes", category: "회복", label: "스트레칭", unit: "분", pointsPerUnit: 3, kcalPerUnit: 2.5 },
+  { id: "yoga_minutes", category: "회복", label: "요가", unit: "분", pointsPerUnit: 4, kcalPerUnit: 3 },
+  { id: "squat_count", category: "근력", label: "스쿼트", unit: "개", pointsPerUnit: 0.8, kcalPerUnit: 0.5 },
+  { id: "pushup_count", category: "근력", label: "팔굽혀펴기", unit: "개", pointsPerUnit: 1.2, kcalPerUnit: 0.8 },
+  { id: "pullup_count", category: "근력", label: "턱걸이", unit: "개", pointsPerUnit: 3, kcalPerUnit: 1 },
+  { id: "lunge_count", category: "근력", label: "런지", unit: "개", pointsPerUnit: 0.9, kcalPerUnit: 0.6 },
+  { id: "situp_count", category: "근력", label: "윗몸일으키기", unit: "개", pointsPerUnit: 0.9, kcalPerUnit: 0.5 },
+  { id: "burpee_count", category: "근력", label: "버피", unit: "개", pointsPerUnit: 2.5, kcalPerUnit: 1.5 },
+  { id: "mountain_climber_count", category: "근력", label: "마운틴 클라이머", unit: "개", pointsPerUnit: 1.5, kcalPerUnit: 1 },
+  { id: "plank_minutes", category: "근력", label: "플랭크", unit: "분", pointsPerUnit: 15, kcalPerUnit: 7 },
+  { id: "stairs_floors", category: "생활 활동", label: "계단", unit: "층", pointsPerUnit: 5, kcalPerUnit: 3 },
+  { id: "cleaning_minutes", category: "생활 활동", label: "청소", unit: "분", pointsPerUnit: 3, kcalPerUnit: 4 },
+  { id: "commute", category: "생활/자기계발", label: "출근", unit: "회", pointsPerUnit: 100, kcalPerUnit: 0 },
+  { id: "study_hours", category: "생활/자기계발", label: "순공 시간", unit: "시간", pointsPerUnit: 50, kcalPerUnit: 0 },
+  { id: "reading_minutes", category: "생활/자기계발", label: "독서", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 },
+  { id: "language_minutes", category: "생활/자기계발", label: "언어 공부", unit: "분", pointsPerUnit: 1.2, kcalPerUnit: 0 },
+  { id: "coding_minutes", category: "생활/자기계발", label: "코딩/프로젝트", unit: "분", pointsPerUnit: 1.2, kcalPerUnit: 0 },
+  { id: "journaling_minutes", category: "생활/자기계발", label: "일기/회고", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 },
+  { id: "prayer_minutes", category: "생활/자기계발", label: "기도/묵상", unit: "분", pointsPerUnit: 1, kcalPerUnit: 0 }
 ];
 
 const shopItems = [
@@ -53,14 +58,17 @@ const weeklyGoals = [
   { id: "weekly_steps_50000", title: "주간 50,000보", metric: "steps", target: 50000, xp: 500 },
   { id: "weekly_cardio_volume_25", title: "주간 유산소 환산 25km", metric: "cardio_volume", target: 25, xp: 500 },
   { id: "weekly_strength_points_700", title: "주간 근력 포인트 700P", metric: "strength_points", target: 700, xp: 600 },
-  { id: "weekly_recovery_90", title: "주간 회복 90분", metric: "recovery_minutes", target: 90, xp: 300 }
+  { id: "weekly_recovery_90", title: "주간 회복 90분", metric: "recovery_minutes", target: 90, xp: 300 },
+  { id: "weekly_study_10", title: "주간 순공 10시간", metric: "study_hours", target: 10, xp: 500 },
+  { id: "weekly_growth_300", title: "주간 자기계발 300분", metric: "development_minutes", target: 300, xp: 350 }
 ];
 
 const monthlyGoals = [
   { id: "monthly_steps_150000", title: "월간 150,000보", metric: "steps", target: 150000, xp: 1500 },
   { id: "monthly_steps_300000", title: "월간 300,000보", metric: "steps", target: 300000, xp: 3500 },
   { id: "monthly_cardio_volume_100", title: "월간 유산소 환산 100km", metric: "cardio_volume", target: 100, xp: 3000 },
-  { id: "monthly_strength_points_2500", title: "월간 근력 포인트 2,500P", metric: "strength_points", target: 2500, xp: 3000 }
+  { id: "monthly_strength_points_2500", title: "월간 근력 포인트 2,500P", metric: "strength_points", target: 2500, xp: 3000 },
+  { id: "monthly_growth_1200", title: "월간 자기계발 1,200분", metric: "development_minutes", target: 1200, xp: 1500 }
 ];
 
 const achievements = [
@@ -72,6 +80,7 @@ const achievements = [
   { id: "weight_7_logs", title: "체중 기록 7회", xp: 300, titleName: "불굴의 의지", isComplete: () => state.weightLogs.length >= 7 },
   { id: "first_commute", title: "첫 출근 기록", xp: 120, titleName: "출근 생존자", hidden: true, isComplete: () => getTotalMetric("commute_count") >= 1 },
   { id: "study_10_hours", title: "순공 10시간", xp: 400, titleName: "몰입하는 사람", hidden: true, isComplete: () => getTotalMetric("study_hours") >= 10 },
+  { id: "development_1000", title: "자기계발 1,000분", xp: 700, titleName: "성장 설계자", hidden: true, isComplete: () => getTotalMetric("development_minutes") >= 1000 },
   {
     id: "salary_warrior",
     title: "주 5일 출근 + 매일 만보",
@@ -111,6 +120,14 @@ const strengthActivityIds = [
 ];
 const recoveryActivityIds = ["stretching_minutes", "yoga_minutes"];
 const exerciseActivityIds = [...new Set([...cardioActivityIds, ...strengthActivityIds, ...recoveryActivityIds])];
+const developmentActivityIds = [
+  "study_hours",
+  "reading_minutes",
+  "language_minutes",
+  "coding_minutes",
+  "journaling_minutes",
+  "prayer_minutes"
+];
 
 const setBonuses = [
   {
@@ -414,6 +431,11 @@ function getMetric(metric, logs) {
       .filter((log) => recoveryActivityIds.includes(log.activityTypeId))
       .reduce((sum, log) => sum + log.value, 0);
   }
+  if (metric === "development_minutes") {
+    return logs
+      .filter((log) => developmentActivityIds.includes(log.activityTypeId))
+      .reduce((sum, log) => sum + (log.activityTypeId === "study_hours" ? log.value * 60 : log.value), 0);
+  }
   if (metric === "cardio_distance") {
     return logs
       .filter((log) => ["running_km", "cycling_km"].includes(log.activityTypeId))
@@ -567,6 +589,8 @@ function getSetBonusLogs(setBonus) {
 
 function formatRequirementProgress(metric, value) {
   if (["workout_minutes", "plank_minutes", "stretching_minutes", "yoga_minutes", "recovery_minutes"].includes(metric)) return `${Math.floor(value)}분`;
+  if (["development_minutes"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}분`;
+  if (["study_hours"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}시간`;
   if (["cardio_distance", "cardio_volume"].includes(metric)) return `${Number(value.toFixed(1)).toLocaleString("ko-KR")}km`;
   if (["exercise_points", "strength_points"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}P`;
   if (["steps"].includes(metric)) return `${Math.floor(value).toLocaleString("ko-KR")}보`;
@@ -630,9 +654,14 @@ function renderDashboard() {
 }
 
 function renderActivityForm() {
-  el.activityTypeSelect.innerHTML = activityTypes.map((activity) => `
-    <option value="${activity.id}">${activity.label} (${activity.unit})</option>
-  `).join("");
+  const categories = [...new Set(activityTypes.map((activity) => activity.category || "기타"))];
+  el.activityTypeSelect.innerHTML = categories.map((category) => {
+    const options = activityTypes
+      .filter((activity) => (activity.category || "기타") === category)
+      .map((activity) => `<option value="${activity.id}">${activity.label} (${activity.unit})</option>`)
+      .join("");
+    return `<optgroup label="${category}">${options}</optgroup>`;
+  }).join("");
   updateActivityPreview();
 }
 
