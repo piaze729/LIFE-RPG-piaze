@@ -212,7 +212,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.2.6";
+const APP_VERSION = "v0.2.7";
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
 let state = loadState();
@@ -252,6 +252,9 @@ const el = {
   savingsForm: document.querySelector("#savingsForm"),
   savingsInput: document.querySelector("#savingsInput"),
   savingsPreview: document.querySelector("#savingsPreview"),
+  withdrawForm: document.querySelector("#withdrawForm"),
+  withdrawInput: document.querySelector("#withdrawInput"),
+  withdrawPreview: document.querySelector("#withdrawPreview"),
   runIncomeButton: document.querySelector("#runIncomeButton"),
   profileBox: document.querySelector("#profileBox"),
   titleSelect: document.querySelector("#titleSelect"),
@@ -822,13 +825,14 @@ function renderGrowth() {
     ? unlockedTitles.map((title) => `<option value="${title.id}" ${title.id === state.selectedTitleId ? "selected" : ""}>${title.title}</option>`).join("")
     : `<option value="">칭호 없음</option>`;
   updateSavingsPreview();
+  updateWithdrawPreview();
 
   const savingsEntries = state.savingsLogs.map((log) => ({
     date: log.date,
     createdAt: log.createdAt,
-    title: "포인트 저축",
-    detail: `지갑에서 저축으로 이동`,
-    amount: `${log.amount.toLocaleString("ko-KR")}P`
+    title: log.type === "withdraw" ? "포인트 출금" : "포인트 저축",
+    detail: log.type === "withdraw" ? "저축에서 지갑으로 이동" : "지갑에서 저축으로 이동",
+    amount: `${log.type === "withdraw" ? "-" : "+"}${log.amount.toLocaleString("ko-KR")}P`
   }));
   const incomeEntries = state.weeklyIncomeLogs.map((log) => ({
     date: log.date,
@@ -862,6 +866,14 @@ function updateSavingsPreview() {
   const amount = Math.max(0, Number(el.savingsInput.value) || 0);
   const projectedSavings = state.savings + Math.min(amount, state.points);
   el.savingsPreview.textContent = `예상 일요일 인컴 +${Math.floor(projectedSavings / 10).toLocaleString("ko-KR")}XP`;
+}
+
+function updateWithdrawPreview() {
+  const amount = Math.max(0, Number(el.withdrawInput.value) || 0);
+  const withdrawAmount = Math.min(amount, state.savings);
+  const projectedWallet = state.points + withdrawAmount;
+  const projectedSavings = state.savings - withdrawAmount;
+  el.withdrawPreview.textContent = `출금 후 지갑 ${formatPoints(projectedWallet)} · 저축 ${formatPoints(projectedSavings)}`;
 }
 
 function renderWeightLogs() {
@@ -972,10 +984,10 @@ function renderLogs() {
     kind: "savings",
     date: log.date,
     createdAt: log.createdAt,
-    title: "저축",
-    detail: "지갑에서 저축으로 이동",
-    amount: `${log.amount}P`,
-    className: "positive"
+    title: log.type === "withdraw" ? "저축 출금" : "저축",
+    detail: log.type === "withdraw" ? "저축에서 지갑으로 이동" : "지갑에서 저축으로 이동",
+    amount: `${log.type === "withdraw" ? "+" : "-"}${log.amount}P`,
+    className: log.type === "withdraw" ? "positive" : "negative"
   }));
   const setBonusEntries = state.setBonusLogs.map((log) => ({
     kind: "setBonus",
@@ -1096,11 +1108,31 @@ function depositSavings() {
 
   state.points -= amount;
   state.savings += amount;
-  state.savingsLogs.push({ id: `savings_${Date.now()}`, date: todayKey(), createdAt: getDateTime(), amount });
+  state.savingsLogs.push({ id: `savings_${Date.now()}`, type: "deposit", date: todayKey(), createdAt: getDateTime(), amount });
   saveState();
   el.savingsInput.value = "";
   renderAll();
   showToast(`${amount.toLocaleString("ko-KR")}P를 저축했습니다.`);
+}
+
+function withdrawSavings() {
+  const amount = Math.floor(Number(el.withdrawInput.value));
+  if (!Number.isFinite(amount) || amount <= 0) {
+    showToast("출금할 포인트를 입력해주세요.");
+    return;
+  }
+  if (amount > state.savings) {
+    showToast("저축 포인트가 부족합니다.");
+    return;
+  }
+
+  state.savings -= amount;
+  state.points += amount;
+  state.savingsLogs.push({ id: `savings_${Date.now()}`, type: "withdraw", date: todayKey(), createdAt: getDateTime(), amount });
+  saveState();
+  el.withdrawInput.value = "";
+  renderAll();
+  showToast(`${amount.toLocaleString("ko-KR")}P를 지갑으로 꺼냈습니다.`);
 }
 
 function runWeeklyIncome(manual = false, force = false) {
@@ -1317,6 +1349,11 @@ function bindEvents() {
     depositSavings();
   });
   el.savingsInput.addEventListener("input", updateSavingsPreview);
+  el.withdrawForm.addEventListener("submit", (event) => {
+    event.preventDefault();
+    withdrawSavings();
+  });
+  el.withdrawInput.addEventListener("input", updateWithdrawPreview);
   el.runIncomeButton.addEventListener("click", () => {
     runWeeklyIncome(true);
     saveState();

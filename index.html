@@ -14,7 +14,7 @@
   <body>
     <div class="app-shell">
       <div class="app-meta" aria-label="앱 버전과 업데이트 상태">
-        <span id="appVersion">Life RPG Point v0.2.6</span>
+        <span id="appVersion">Life RPG Point v0.2.7</span>
         <button id="forceRefreshButton" class="text-button" type="button">업데이트 확인</button>
       </div>
 
@@ -165,6 +165,15 @@
             </label>
             <div class="preview-box" id="savingsPreview">예상 인컴 +0XP</div>
             <button type="submit">포인트 저축하기</button>
+          </form>
+
+          <form id="withdrawForm" class="activity-form">
+            <label>
+              출금할 포인트
+              <input id="withdrawInput" type="number" min="1" step="1" inputmode="numeric" placeholder="300" required>
+            </label>
+            <div class="preview-box" id="withdrawPreview">출금 후 지갑 +0P</div>
+            <button type="submit">저축에서 꺼내기</button>
           </form>
 
           <div id="profileBox" class="profile-box"></div>
