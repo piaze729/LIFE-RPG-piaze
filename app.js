@@ -50,8 +50,8 @@ const shopItems = [
   { id: "chocolate", category: "간식", title: "초콜릿", unit: "1개", costPerUnit: 200, kcalPerUnit: 280 },
   { id: "ice_cream", category: "간식", title: "아이스크림", unit: "1개", costPerUnit: 180, kcalPerUnit: 240 },
   { id: "cake", category: "간식", title: "케이크", unit: "1조각", costPerUnit: 350, kcalPerUnit: 430 },
-  { id: "free_meal", category: "특별권", title: "자유식", unit: "1회", costPerUnit: 900, kcalPerUnit: 0 },
-  { id: "dining_out", category: "특별권", title: "외식권", unit: "1회", costPerUnit: 800, kcalPerUnit: 0 },
+  { id: "delivery_meal", category: "특별권", title: "배달음식", unit: "1회", costPerUnit: 1000, kcalPerUnit: 0 },
+  { id: "dining_out", category: "특별권", title: "외식권", unit: "1회", costPerUnit: 1000, kcalPerUnit: 0 },
   { id: "late_night", category: "특별권", title: "야식권", unit: "1회", costPerUnit: 700, kcalPerUnit: 0 }
 ];
 
@@ -219,7 +219,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.3.1";
+const APP_VERSION = "v0.3.2";
 const WITHDRAW_FEE_RATE = 0.15;
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
