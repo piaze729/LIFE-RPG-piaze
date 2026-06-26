@@ -14,7 +14,7 @@
   <body>
     <div class="app-shell">
       <div class="app-meta" aria-label="앱 버전과 업데이트 상태">
-        <span id="appVersion">Life RPG Point v0.3.3</span>
+        <span id="appVersion">Life RPG Point v0.3.4</span>
         <button id="forceRefreshButton" class="text-button" type="button">업데이트 확인</button>
       </div>
 
@@ -140,7 +140,13 @@
             <h2 id="shopTitle">보상 사용</h2>
             <span class="pill">포인트로 선택</span>
           </div>
+          <label class="shop-search">
+            보상 검색
+            <input id="shopSearchInput" type="search" autocomplete="off" placeholder="우삼겹, ㅇㅅ, 라면">
+          </label>
+          <div id="recentPurchaseBox" class="recent-purchases"></div>
           <div id="shopFilters" class="filter-row" aria-label="상점 카테고리"></div>
+          <div id="shopResultLabel" class="shop-result-label"></div>
           <div id="shopList" class="item-list"></div>
         </section>
 

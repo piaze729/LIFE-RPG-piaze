@@ -34,22 +34,38 @@ const shopItems = [
   { id: "tofu", category: "단백질", title: "두부", unit: "100g", costPerUnit: 0, kcalPerUnit: 80 },
   { id: "chicken_breast", category: "단백질", title: "닭가슴살", unit: "100g", costPerUnit: 0, kcalPerUnit: 110 },
   { id: "tuna_can", category: "단백질", title: "참치", unit: "1캔", costPerUnit: 0, kcalPerUnit: 180 },
+  { id: "milk", category: "단백질", title: "우유", unit: "1잔", costPerUnit: 0, kcalPerUnit: 130 },
+  { id: "greek_yogurt", category: "단백질", title: "그릭요거트", unit: "100g", costPerUnit: 0, kcalPerUnit: 100 },
   { id: "beef_shortplate", category: "고기류", title: "우삼겹", unit: "100g", costPerUnit: 300, kcalPerUnit: 330 },
   { id: "thin_pork_belly", category: "고기류", title: "대패삼겹", unit: "100g", costPerUnit: 320, kcalPerUnit: 360 },
   { id: "pork_belly", category: "고기류", title: "삼겹살", unit: "100g", costPerUnit: 400, kcalPerUnit: 420 },
   { id: "pork_shoulder", category: "고기류", title: "목살", unit: "100g", costPerUnit: 350, kcalPerUnit: 270 },
   { id: "beef", category: "고기류", title: "소고기", unit: "100g", costPerUnit: 450, kcalPerUnit: 250 },
+  { id: "steak", category: "고기류", title: "스테이크", unit: "100g", costPerUnit: 600, kcalPerUnit: 270 },
+  { id: "duck_meat", category: "고기류", title: "오리고기", unit: "100g", costPerUnit: 420, kcalPerUnit: 300 },
+  { id: "pork_bulgogi", category: "고기류", title: "제육볶음", unit: "1인분", costPerUnit: 350, kcalPerUnit: 520 },
+  { id: "shrimp", category: "해산물", title: "새우", unit: "100g", costPerUnit: 220, kcalPerUnit: 100 },
+  { id: "squid", category: "해산물", title: "오징어", unit: "100g", costPerUnit: 180, kcalPerUnit: 90 },
   { id: "rice", category: "탄수화물", title: "밥", unit: "1공기", costPerUnit: 180, kcalPerUnit: 300 },
   { id: "sweet_potato", category: "탄수화물", title: "고구마", unit: "100g", costPerUnit: 120, kcalPerUnit: 130 },
+  { id: "potato", category: "탄수화물", title: "감자", unit: "100g", costPerUnit: 100, kcalPerUnit: 85 },
+  { id: "oatmeal", category: "탄수화물", title: "오트밀", unit: "50g", costPerUnit: 150, kcalPerUnit: 190 },
+  { id: "banana", category: "탄수화물", title: "바나나", unit: "1개", costPerUnit: 100, kcalPerUnit: 90 },
   { id: "ramen", category: "면/분식", title: "라면", unit: "1봉", costPerUnit: 350, kcalPerUnit: 500 },
   { id: "noodle", category: "면/분식", title: "국수", unit: "1그릇", costPerUnit: 320, kcalPerUnit: 450 },
+  { id: "udon", category: "면/분식", title: "우동", unit: "1그릇", costPerUnit: 380, kcalPerUnit: 470 },
+  { id: "kimbap", category: "면/분식", title: "김밥", unit: "1줄", costPerUnit: 220, kcalPerUnit: 350 },
+  { id: "tteokbokki", category: "면/분식", title: "떡볶이", unit: "1인분", costPerUnit: 450, kcalPerUnit: 600 },
   { id: "americano", category: "음료", title: "아메리카노", unit: "1잔", costPerUnit: 100, kcalPerUnit: 15 },
   { id: "latte", category: "음료", title: "라떼", unit: "1잔", costPerUnit: 180, kcalPerUnit: 180 },
   { id: "soda", category: "음료", title: "탄산", unit: "1캔", costPerUnit: 200, kcalPerUnit: 150 },
+  { id: "zero_soda", category: "음료", title: "제로탄산", unit: "1캔", costPerUnit: 80, kcalPerUnit: 0 },
+  { id: "energy_drink", category: "음료", title: "에너지드링크", unit: "1캔", costPerUnit: 250, kcalPerUnit: 120 },
   { id: "snack", category: "간식", title: "과자", unit: "1봉", costPerUnit: 200, kcalPerUnit: 360 },
   { id: "chocolate", category: "간식", title: "초콜릿", unit: "1개", costPerUnit: 200, kcalPerUnit: 280 },
   { id: "ice_cream", category: "간식", title: "아이스크림", unit: "1개", costPerUnit: 180, kcalPerUnit: 240 },
   { id: "cake", category: "간식", title: "케이크", unit: "1조각", costPerUnit: 350, kcalPerUnit: 430 },
+  { id: "bread", category: "간식", title: "빵", unit: "1개", costPerUnit: 250, kcalPerUnit: 320 },
   { id: "delivery_meal", category: "특별권", title: "배달음식", unit: "1회", costPerUnit: 1000, kcalPerUnit: 0 },
   { id: "dining_out", category: "특별권", title: "외식권", unit: "1회", costPerUnit: 1000, kcalPerUnit: 0 },
   { id: "late_night", category: "특별권", title: "야식권", unit: "1회", costPerUnit: 700, kcalPerUnit: 0 }
@@ -219,8 +235,9 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.3.3";
+const APP_VERSION = "v0.3.4";
 const WITHDRAW_FEE_RATE = 0.15;
+const HANGUL_INITIALS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
 
 let state = loadState();
@@ -251,7 +268,10 @@ const el = {
   monthlyGoalList: document.querySelector("#monthlyGoalList"),
   achievementList: document.querySelector("#achievementList"),
   setBonusList: document.querySelector("#setBonusList"),
+  shopSearchInput: document.querySelector("#shopSearchInput"),
+  recentPurchaseBox: document.querySelector("#recentPurchaseBox"),
   shopFilters: document.querySelector("#shopFilters"),
+  shopResultLabel: document.querySelector("#shopResultLabel"),
   shopList: document.querySelector("#shopList"),
   savingsForm: document.querySelector("#savingsForm"),
   savingsInput: document.querySelector("#savingsInput"),
@@ -344,6 +364,53 @@ function formatLogQuantity(log) {
   const item = shopItems.find((shopItem) => shopItem.id === log.itemId);
   if (item) return formatShopQuantity(item, log.quantity || 1);
   return `${log.quantity || 1}${log.unit || ""}`;
+}
+
+function normalizeSearchText(value) {
+  return String(value || "").replace(/\s+/g, "").toLowerCase();
+}
+
+function getHangulInitials(value) {
+  return String(value || "").split("").map((char) => {
+    const code = char.charCodeAt(0);
+    if (code < 0xac00 || code > 0xd7a3) return char;
+    return HANGUL_INITIALS[Math.floor((code - 0xac00) / 588)];
+  }).join("");
+}
+
+function includesInOrder(target, query) {
+  let cursor = 0;
+  return [...query].every((char) => {
+    const index = target.indexOf(char, cursor);
+    if (index < 0) return false;
+    cursor = index + 1;
+    return true;
+  });
+}
+
+function matchesShopSearch(item, query) {
+  const normalizedQuery = normalizeSearchText(query);
+  if (!normalizedQuery) return true;
+  const searchableText = normalizeSearchText(`${item.title}${item.category}${item.unit}`);
+  const initials = normalizeSearchText(getHangulInitials(item.title));
+  return searchableText.includes(normalizedQuery)
+    || initials.includes(normalizedQuery)
+    || includesInOrder(initials, normalizedQuery);
+}
+
+function getRecentPurchasedItems(limit = 8) {
+  const seen = new Set();
+  const recent = [];
+
+  [...state.purchaseLogs].reverse().forEach((log) => {
+    if (seen.has(log.itemId)) return;
+    const item = shopItems.find((shopItem) => shopItem.id === log.itemId);
+    if (!item) return;
+    seen.add(log.itemId);
+    recent.push(item);
+  });
+
+  return recent.slice(0, limit);
 }
 
 function byDateDesc(a, b) {
@@ -825,9 +892,38 @@ function renderShopFilters() {
   `).join("");
 }
 
+function renderRecentPurchases() {
+  const recentItems = getRecentPurchasedItems();
+  if (!recentItems.length) {
+    el.recentPurchaseBox.innerHTML = "";
+    return;
+  }
+
+  el.recentPurchaseBox.innerHTML = `
+    <div class="recent-title">최근 구매</div>
+    <div class="recent-chip-row">
+      ${recentItems.map((item) => `
+        <button class="recent-chip" type="button" data-shop-select-id="${item.id}">
+          ${item.title}
+        </button>
+      `).join("")}
+    </div>
+  `;
+}
+
 function renderShop() {
-  const visibleItems = activeShopCategory === "전체" ? shopItems : shopItems.filter((item) => item.category === activeShopCategory);
-  el.shopList.innerHTML = visibleItems.map((item) => {
+  const query = el.shopSearchInput.value.trim();
+  const visibleItems = query
+    ? shopItems.filter((item) => matchesShopSearch(item, query))
+    : activeShopCategory === "전체"
+      ? shopItems
+      : shopItems.filter((item) => item.category === activeShopCategory);
+  const label = query
+    ? `"${query}" 검색 결과 ${visibleItems.length}개`
+    : `${activeShopCategory} 보상 ${visibleItems.length}개`;
+  el.shopResultLabel.textContent = label;
+  el.shopList.classList.toggle("shop-grid", visibleItems.length > 0);
+  el.shopList.innerHTML = visibleItems.length ? visibleItems.map((item) => {
     const quantity = shopQuantities[item.id] || 1;
     const purchase = calculatePurchase(item, quantity);
     const canBuy = state.points >= purchase.totalCost;
@@ -835,9 +931,12 @@ function renderShop() {
     const totalCost = purchase.totalCost === 0 ? "무료" : `${purchase.totalCost.toLocaleString("ko-KR")}P`;
     return `
       <article class="rpg-item shop-card">
-        <div>
-          <div class="item-title">${item.title}</div>
-          <div class="item-meta">${item.category} · ${item.unit}당 ${unitCost}</div>
+        <div class="shop-card-head">
+          <div>
+            <span class="category-badge">${item.category}</span>
+            <div class="item-title shop-title">${item.title}</div>
+          </div>
+          <strong class="shop-unit-price">${unitCost}<span> / ${item.unit}</span></strong>
         </div>
         <div class="quantity-control" aria-label="${item.title} 수량 선택">
           <button class="quantity-button" type="button" data-quantity-action="decrease" data-item-id="${item.id}" ${quantity <= 1 ? "disabled" : ""}>-</button>
@@ -848,10 +947,10 @@ function renderShop() {
           <span>참고 ${purchase.estimatedCalories.toLocaleString("ko-KR")} kcal</span>
           <strong class="cost">${totalCost}</strong>
         </div>
-        <button class="item-button buy" type="button" data-item-id="${item.id}" ${canBuy ? "" : "disabled"}>${canBuy ? "구매" : "포인트 부족"}</button>
+        <button class="item-button buy" type="button" data-buy-item-id="${item.id}" ${canBuy ? "" : "disabled"}>${canBuy ? "구매하기" : "포인트 부족"}</button>
       </article>
     `;
-  }).join("");
+  }).join("") : `<p class="empty-text" style="display:block">검색 결과 없음</p>`;
 }
 
 function renderGrowth() {
@@ -1156,6 +1255,7 @@ function renderAll() {
   renderSetBonuses();
   renderAchievements();
   renderShopFilters();
+  renderRecentPurchases();
   renderShop();
   renderGrowth();
   renderWeightLogs();
@@ -1489,6 +1589,18 @@ function bindEvents() {
     renderShop();
   });
 
+  el.shopSearchInput.addEventListener("input", renderShop);
+
+  el.recentPurchaseBox.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-shop-select-id]");
+    if (!button) return;
+    const item = shopItems.find((shopItem) => shopItem.id === button.dataset.shopSelectId);
+    if (!item) return;
+    el.shopSearchInput.value = item.title;
+    renderShop();
+    el.shopList.scrollIntoView({ behavior: "smooth", block: "start" });
+  });
+
   el.shopList.addEventListener("click", (event) => {
     const quantityButton = event.target.closest("[data-quantity-action]");
     if (quantityButton) {
@@ -1501,8 +1613,8 @@ function bindEvents() {
       return;
     }
 
-    const button = event.target.closest("[data-item-id]");
-    if (button) buyItem(button.dataset.itemId);
+    const button = event.target.closest("[data-buy-item-id]");
+    if (button) buyItem(button.dataset.buyItemId);
   });
 
   el.savingsForm.addEventListener("submit", (event) => {
