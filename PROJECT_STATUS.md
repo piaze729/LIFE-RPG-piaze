@@ -10,6 +10,8 @@
 
 이 문서는 여러 Codex 채팅방에서 Life RPG Point의 현재 상태를 공유하기 위한 기준 문서다. 새 채팅방에서 작업을 이어갈 때는 먼저 이 파일과 `app.js`, `index.html`, `style.css`를 확인하면 된다.
 
+장기 방향성, Life OS 관점, 인생 스탯, 정체성 시스템, 회고 시스템에 대한 논의는 [ROADMAP.md](ROADMAP.md)를 함께 확인한다.
+
 ## 프로젝트 철학
 
 Life RPG Point는 다이어트 앱이 아니다.
@@ -33,6 +35,7 @@ Life RPG Point는 다이어트 앱이 아니다.
 - `service-worker.js`: 앱 shell 캐싱 및 오프라인 대응
 - `.nojekyll`: GitHub Pages에서 정적 파일 그대로 배포
 - `PROJECT_STATUS.md`: 현재 프로젝트 현황 문서
+- `ROADMAP.md`: 장기 방향성 및 Life OS 설계 문서
 
 ## 배포와 실행
 

@@ -6,6 +6,7 @@
 
 - 앱 실행: <https://piaze729.github.io/LIFE-RPG-piaze/>
 - 프로젝트 현황 문서: [PROJECT_STATUS.md](PROJECT_STATUS.md)
+- 장기 방향성 문서: [ROADMAP.md](ROADMAP.md)
 
 ## 현재 구조
 
@@ -16,7 +17,7 @@
 
 ## Codex 작업 시작 규칙
 
-새 Codex 채팅방에서 이어서 작업할 때는 먼저 [PROJECT_STATUS.md](PROJECT_STATUS.md)를 읽고 현재 기능, 철학, 주의사항을 확인합니다.
+새 Codex 채팅방에서 이어서 작업할 때는 먼저 [PROJECT_STATUS.md](PROJECT_STATUS.md)를 읽고 현재 기능, 철학, 주의사항을 확인합니다. 장기 방향이나 큰 기능 설계를 논의할 때는 [ROADMAP.md](ROADMAP.md)를 함께 확인합니다.
 
 앱 기능을 수정할 때는 다음 값을 함께 올립니다.
 
