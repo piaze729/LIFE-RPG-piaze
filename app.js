@@ -125,6 +125,29 @@ const titleSets = [
   }
 ];
 
+const lifeStatDefinitions = [
+  { id: "body", label: "신체", code: "BODY", description: "움직임과 운동으로 성장합니다." },
+  { id: "wisdom", label: "지혜", code: "WIS", description: "공부, 독서, 프로젝트로 성장합니다." },
+  { id: "discipline", label: "성실", code: "DISC", description: "출근과 생활 루틴으로 성장합니다." },
+  { id: "faith", label: "신앙", code: "FAITH", description: "기도와 묵상으로 성장합니다." },
+  { id: "creation", label: "창작", code: "CREATE", description: "그림, 악기, 프로젝트로 성장합니다." },
+  { id: "recovery", label: "회복", code: "REST", description: "스트레칭과 요가로 성장합니다." }
+];
+
+const quickRecordPresets = [
+  { activityTypeId: "steps", label: "걷기", value: 5000 },
+  { activityTypeId: "running_km", label: "러닝", value: 3 },
+  { activityTypeId: "squat_count", label: "스쿼트", value: 100 },
+  { activityTypeId: "pushup_count", label: "팔굽혀펴기", value: 50 },
+  { activityTypeId: "stretching_minutes", label: "스트레칭", value: 10 },
+  { activityTypeId: "study_hours", label: "순공", value: 1 },
+  { activityTypeId: "reading_minutes", label: "독서", value: 30 },
+  { activityTypeId: "commute", label: "출근", value: 1 },
+  { activityTypeId: "prayer_minutes", label: "기도/묵상", value: 20 },
+  { activityTypeId: "drawing_minutes", label: "그림", value: 30 },
+  { activityTypeId: "instrument_minutes", label: "악기", value: 30 }
+];
+
 const cardioActivityIds = ["running_km", "cycling_km", "jump_rope_minutes", "swimming_minutes", "hiking_minutes"];
 const strengthActivityIds = [
   "squat_count",
@@ -235,7 +258,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.3.4";
+const APP_VERSION = "v0.4.0";
 const WITHDRAW_FEE_RATE = 0.15;
 const HANGUL_INITIALS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
@@ -260,10 +283,16 @@ const el = {
   weeklySteps: document.querySelector("#weeklySteps"),
   incomeStatus: document.querySelector("#incomeStatus"),
   motivationText: document.querySelector("#motivationText"),
+  identityLabel: document.querySelector("#identityLabel"),
+  identityCopy: document.querySelector("#identityCopy"),
+  lifeWeekLabel: document.querySelector("#lifeWeekLabel"),
+  lifeStatGrid: document.querySelector("#lifeStatGrid"),
+  weeklyReviewBox: document.querySelector("#weeklyReviewBox"),
   activityForm: document.querySelector("#activityForm"),
   activityTypeSelect: document.querySelector("#activityTypeSelect"),
   activityValueInput: document.querySelector("#activityValueInput"),
   activityPreview: document.querySelector("#activityPreview"),
+  quickRecordList: document.querySelector("#quickRecordList"),
   weeklyGoalList: document.querySelector("#weeklyGoalList"),
   monthlyGoalList: document.querySelector("#monthlyGoalList"),
   achievementList: document.querySelector("#achievementList"),
@@ -294,6 +323,9 @@ const el = {
   logList: document.querySelector("#logList"),
   growthLogList: document.querySelector("#growthLogList"),
   clearDataButton: document.querySelector("#clearDataButton"),
+  exportDataButton: document.querySelector("#exportDataButton"),
+  importDataButton: document.querySelector("#importDataButton"),
+  importDataInput: document.querySelector("#importDataInput"),
   toast: document.querySelector("#toast")
 };
 
@@ -318,6 +350,7 @@ function loadState() {
     weightLogs: [],
     savingsLogs: [],
     weeklyIncomeLogs: [],
+    xpLogs: [],
     claimedWeeklyGoals: [],
     claimedMonthlyGoals: [],
     claimedAchievements: [],
@@ -328,10 +361,50 @@ function loadState() {
 
   try {
     const stored = JSON.parse(localStorage.getItem(STORAGE_KEY) || "{}");
-    return { ...fallback, ...stored };
+    return normalizeState(stored, fallback);
   } catch {
     return fallback;
   }
+}
+
+function normalizeState(input = {}, fallback = loadStateFallback()) {
+  return {
+    ...fallback,
+    ...input,
+    activityLogs: Array.isArray(input.activityLogs) ? input.activityLogs : fallback.activityLogs,
+    purchaseLogs: Array.isArray(input.purchaseLogs) ? input.purchaseLogs : fallback.purchaseLogs,
+    weightLogs: Array.isArray(input.weightLogs) ? input.weightLogs : fallback.weightLogs,
+    savingsLogs: Array.isArray(input.savingsLogs) ? input.savingsLogs : fallback.savingsLogs,
+    weeklyIncomeLogs: Array.isArray(input.weeklyIncomeLogs) ? input.weeklyIncomeLogs : fallback.weeklyIncomeLogs,
+    xpLogs: Array.isArray(input.xpLogs) ? input.xpLogs : fallback.xpLogs || [],
+    claimedWeeklyGoals: Array.isArray(input.claimedWeeklyGoals) ? input.claimedWeeklyGoals : fallback.claimedWeeklyGoals,
+    claimedMonthlyGoals: Array.isArray(input.claimedMonthlyGoals) ? input.claimedMonthlyGoals : fallback.claimedMonthlyGoals,
+    claimedAchievements: Array.isArray(input.claimedAchievements) ? input.claimedAchievements : fallback.claimedAchievements,
+    claimedSetBonuses: Array.isArray(input.claimedSetBonuses) ? input.claimedSetBonuses : fallback.claimedSetBonuses,
+    setBonusLogs: Array.isArray(input.setBonusLogs) ? input.setBonusLogs : fallback.setBonusLogs
+  };
+}
+
+function loadStateFallback() {
+  return {
+    points: 0,
+    savings: 0,
+    xp: 0,
+    totalEarned: 0,
+    totalSpent: 0,
+    activityLogs: [],
+    purchaseLogs: [],
+    weightLogs: [],
+    savingsLogs: [],
+    weeklyIncomeLogs: [],
+    xpLogs: [],
+    claimedWeeklyGoals: [],
+    claimedMonthlyGoals: [],
+    claimedAchievements: [],
+    claimedSetBonuses: [],
+    setBonusLogs: [],
+    selectedTitleId: null
+  };
 }
 
 function saveState() {
@@ -364,6 +437,12 @@ function formatLogQuantity(log) {
   const item = shopItems.find((shopItem) => shopItem.id === log.itemId);
   if (item) return formatShopQuantity(item, log.quantity || 1);
   return `${log.quantity || 1}${log.unit || ""}`;
+}
+
+function formatActivityValue(activity, value) {
+  if (!activity) return String(value);
+  const amount = Number.isInteger(value) ? value.toLocaleString("ko-KR") : Number(value.toFixed(1)).toLocaleString("ko-KR");
+  return `${amount}${activity.unit}`;
 }
 
 function normalizeSearchText(value) {
@@ -668,6 +747,101 @@ function getWeeklyStats() {
   };
 }
 
+function addStatGain(target, statId, value) {
+  target[statId] = (target[statId] || 0) + value;
+}
+
+function getActivityStatGains(log) {
+  const gains = Object.fromEntries(lifeStatDefinitions.map((stat) => [stat.id, 0]));
+  const points = log.points || 0;
+  const value = Number(log.value) || 0;
+  const id = log.activityTypeId;
+
+  if (id === "steps") {
+    addStatGain(gains, "body", value / 2500);
+    addStatGain(gains, "discipline", value / 12000);
+  } else if (cardioActivityIds.includes(id) || strengthActivityIds.includes(id)) {
+    addStatGain(gains, "body", points / 45);
+  } else if (recoveryActivityIds.includes(id)) {
+    addStatGain(gains, "recovery", value / 20);
+    addStatGain(gains, "body", points / 120);
+  } else if (id === "commute") {
+    addStatGain(gains, "discipline", value * 2);
+  } else if (id === "study_hours") {
+    addStatGain(gains, "wisdom", value * 1.5);
+    addStatGain(gains, "discipline", value * 0.5);
+  } else if (["reading_minutes", "language_minutes"].includes(id)) {
+    addStatGain(gains, "wisdom", value / 30);
+  } else if (id === "coding_minutes") {
+    addStatGain(gains, "wisdom", value / 40);
+    addStatGain(gains, "creation", value / 60);
+  } else if (["instrument_minutes", "drawing_minutes"].includes(id)) {
+    addStatGain(gains, "creation", value / 30);
+    addStatGain(gains, "discipline", value / 90);
+  } else if (id === "journaling_minutes") {
+    addStatGain(gains, "wisdom", value / 60);
+    addStatGain(gains, "discipline", value / 60);
+  } else if (id === "prayer_minutes") {
+    addStatGain(gains, "faith", value / 20);
+    addStatGain(gains, "recovery", value / 80);
+  }
+
+  return gains;
+}
+
+function getLifeStatSummary(logs = state.activityLogs) {
+  const totals = Object.fromEntries(lifeStatDefinitions.map((stat) => [stat.id, 0]));
+  logs.forEach((log) => {
+    const gains = getActivityStatGains(log);
+    lifeStatDefinitions.forEach((stat) => {
+      totals[stat.id] += gains[stat.id] || 0;
+    });
+  });
+  return lifeStatDefinitions
+    .map((stat) => ({ ...stat, value: totals[stat.id] || 0 }))
+    .sort((a, b) => b.value - a.value);
+}
+
+function getIdentityFromStats(stats) {
+  const top = stats[0];
+  if (!top || top.value < 1) {
+    return {
+      label: "기록 대기자",
+      copy: "아직 삶의 패턴을 읽을 기록이 부족합니다."
+    };
+  }
+  const identities = {
+    body: ["개척자형", "몸을 움직여 삶을 열어가는 패턴이 가장 뚜렷합니다."],
+    wisdom: ["탐구자형", "배움과 사고를 통해 삶을 성장시키는 흐름이 강합니다."],
+    discipline: ["생활인형", "출근과 루틴으로 현실을 운영하는 힘이 쌓이고 있습니다."],
+    faith: ["수행자형", "기도와 묵상으로 내면을 세우는 기록이 돋보입니다."],
+    creation: ["창조자형", "만들고 표현하는 활동이 삶의 중심으로 자라고 있습니다."],
+    recovery: ["회복가형", "무리보다 회복을 선택하며 지속 가능한 리듬을 만들고 있습니다."]
+  };
+  const [label, copy] = identities[top.id] || ["성장형", "기록이 하나의 방향으로 쌓이고 있습니다."];
+  return { label, copy };
+}
+
+function getLifeWeekLabel(date = new Date()) {
+  const start = new Date(date.getFullYear(), 0, 1);
+  const dayOffset = Math.floor((date - start) / 86400000);
+  return `${date.getFullYear()}년 ${Math.floor(dayOffset / 7) + 1}번째 주`;
+}
+
+function getWeeklyReview(stats, logs) {
+  if (!logs.length) return "이번 주는 아직 해석할 기록이 없습니다. 오늘 살아낸 일을 하나 기록해보세요.";
+  const grown = stats.filter((stat) => stat.value > 0).slice(0, 2);
+  const names = grown.map((stat) => stat.label).join(grown.length > 1 ? "와 " : "");
+  const steps = getMetric("steps", logs);
+  const developmentMinutes = getMetric("development_minutes", logs);
+  const exercisePoints = getMetric("exercise_points", logs);
+  const details = [];
+  if (steps > 0) details.push(`걷기 ${Math.round(steps).toLocaleString("ko-KR")}보`);
+  if (exercisePoints > 0) details.push(`운동 ${formatPoints(exercisePoints)}`);
+  if (developmentMinutes > 0) details.push(`자기계발 ${Math.round(developmentMinutes).toLocaleString("ko-KR")}분`);
+  return `이번 주 당신은 ${names}를 성장시켰습니다. ${details.slice(0, 3).join(" · ") || "작은 기록들이 쌓였습니다."}`;
+}
+
 function getWeightStats() {
   const logs = [...state.weightLogs].sort((a, b) => a.date.localeCompare(b.date));
   const latestSeven = logs.slice(-7);
@@ -753,6 +927,10 @@ function renderDashboard() {
   const today = getTodayStats();
   const week = getWeeklyStats();
   const level = getLevel();
+  const allStats = getLifeStatSummary();
+  const weeklyLogs = getLogsInRange(getWeekStart());
+  const weeklyStats = getLifeStatSummary(weeklyLogs);
+  const identity = getIdentityFromStats(allStats);
 
   el.pointBalance.textContent = formatPoints(state.points);
   el.savingsBalance.textContent = formatPoints(state.savings);
@@ -765,6 +943,26 @@ function renderDashboard() {
   el.weeklySteps.textContent = `${Math.round(week.steps).toLocaleString("ko-KR")}보`;
   el.weeklySummary.textContent = `이번 주 ${Math.round(week.steps).toLocaleString("ko-KR")}보 · 운동 ${formatPoints(week.exercisePoints)}`;
   el.incomeStatus.textContent = `예상 일요일 인컴 +${Math.floor(state.savings / 10).toLocaleString("ko-KR")}XP`;
+  el.identityLabel.textContent = identity.label;
+  el.identityCopy.textContent = identity.copy;
+  el.lifeWeekLabel.textContent = getLifeWeekLabel();
+  el.lifeStatGrid.innerHTML = lifeStatDefinitions.map((stat) => {
+    const total = allStats.find((item) => item.id === stat.id)?.value || 0;
+    const weekly = weeklyStats.find((item) => item.id === stat.id)?.value || 0;
+    const percent = Math.min(100, Math.round((total % 10) * 10));
+    return `
+      <article>
+        <div>
+          <span>${stat.code}</span>
+          <strong>${stat.label}</strong>
+        </div>
+        <b>Lv.${Math.floor(total) + 1}</b>
+        <div class="mini-track"><i style="width:${percent}%"></i></div>
+        <small>이번 주 +${Number(weekly.toFixed(1)).toLocaleString("ko-KR")}</small>
+      </article>
+    `;
+  }).join("");
+  el.weeklyReviewBox.textContent = getWeeklyReview(weeklyStats, weeklyLogs);
   el.motivationText.textContent = state.points > 0
     ? "계획은 직접 세우고, 기록은 자산으로 남깁니다."
     : "오늘 살아낸 일을 하나 기록해보세요.";
@@ -780,6 +978,21 @@ function renderActivityForm() {
     return `<optgroup label="${category}">${options}</optgroup>`;
   }).join("");
   updateActivityPreview();
+}
+
+function renderQuickRecords() {
+  el.quickRecordList.innerHTML = quickRecordPresets.map((preset) => {
+    const activity = getActivityType(preset.activityTypeId);
+    if (!activity) return "";
+    const result = calculateActivity(preset.activityTypeId, preset.value, todayKey());
+    return `
+      <button class="quick-record" type="button" data-quick-activity-id="${preset.activityTypeId}" data-quick-value="${preset.value}">
+        <span>${preset.label}</span>
+        <strong>${formatActivityValue(activity, preset.value)}</strong>
+        <small>+${result.points}P</small>
+      </button>
+    `;
+  }).join("");
 }
 
 function updateActivityPreview() {
@@ -1251,6 +1464,7 @@ function renderLogs() {
 
 function renderAll() {
   renderDashboard();
+  renderQuickRecords();
   renderGoals();
   renderSetBonuses();
   renderAchievements();
@@ -1263,9 +1477,9 @@ function renderAll() {
   renderLogs();
 }
 
-function recordActivity() {
+function recordActivity(activityTypeId = el.activityTypeSelect.value, rawValue = el.activityValueInput.value, options = {}) {
   const date = todayKey();
-  const result = calculateActivity(el.activityTypeSelect.value, el.activityValueInput.value, date);
+  const result = calculateActivity(activityTypeId, rawValue, date);
   if (!result.activity || result.value <= 0 || result.points <= 0) {
     showToast("활동 수치를 입력해주세요.");
     return;
@@ -1286,8 +1500,10 @@ function recordActivity() {
   state.totalEarned += log.points;
   state.activityLogs.push(log);
   saveState();
-  el.activityValueInput.value = "";
-  updateActivityPreview();
+  if (!options.keepInput) {
+    el.activityValueInput.value = "";
+    updateActivityPreview();
+  }
   renderAll();
   showToast(`${result.activity.label} 기록: +${log.points}P`);
 }
@@ -1490,6 +1706,51 @@ function clearAllData() {
   showToast("전체 데이터를 삭제했습니다.");
 }
 
+function exportData() {
+  const backup = {
+    app: "Life RPG Point",
+    version: APP_VERSION,
+    exportedAt: getDateTime(),
+    storageKey: STORAGE_KEY,
+    state
+  };
+  const blob = new Blob([JSON.stringify(backup, null, 2)], { type: "application/json" });
+  const url = URL.createObjectURL(blob);
+  const link = document.createElement("a");
+  link.href = url;
+  link.download = `life-rpg-backup-${todayKey()}.json`;
+  document.body.appendChild(link);
+  link.click();
+  link.remove();
+  URL.revokeObjectURL(url);
+  showToast("백업 파일을 만들었습니다.");
+}
+
+function importDataFile(file) {
+  if (!file) return;
+  const reader = new FileReader();
+  reader.addEventListener("load", () => {
+    try {
+      const parsed = JSON.parse(String(reader.result || "{}"));
+      const importedState = parsed.state || parsed;
+      if (!importedState || typeof importedState !== "object" || !Array.isArray(importedState.activityLogs)) {
+        showToast("백업 파일 형식이 맞지 않습니다.");
+        return;
+      }
+      if (!confirm("현재 기기의 Life RPG 데이터를 백업 파일 내용으로 교체할까요?")) return;
+      state = normalizeState(importedState);
+      saveState();
+      renderAll();
+      showToast("백업 데이터를 가져왔습니다.");
+    } catch {
+      showToast("백업 파일을 읽지 못했습니다.");
+    } finally {
+      el.importDataInput.value = "";
+    }
+  });
+  reader.readAsText(file);
+}
+
 let toastTimer;
 let waitingServiceWorker = null;
 let isReloadingForUpdate = false;
@@ -1560,6 +1821,12 @@ function bindEvents() {
   });
   el.activityTypeSelect.addEventListener("change", updateActivityPreview);
   el.activityValueInput.addEventListener("input", updateActivityPreview);
+
+  el.quickRecordList.addEventListener("click", (event) => {
+    const button = event.target.closest("[data-quick-activity-id]");
+    if (!button) return;
+    recordActivity(button.dataset.quickActivityId, button.dataset.quickValue, { keepInput: true });
+  });
 
   el.weeklyGoalList.addEventListener("click", (event) => {
     const button = event.target.closest("[data-goal-id]");
@@ -1655,6 +1922,9 @@ function bindEvents() {
   });
 
   el.clearDataButton.addEventListener("click", clearAllData);
+  el.exportDataButton.addEventListener("click", exportData);
+  el.importDataButton.addEventListener("click", () => el.importDataInput.click());
+  el.importDataInput.addEventListener("change", () => importDataFile(el.importDataInput.files?.[0]));
   el.applyUpdateButton.addEventListener("click", applyAvailableUpdate);
   el.forceRefreshButton.addEventListener("click", forceRefreshApp);
 }

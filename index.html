@@ -14,7 +14,7 @@
   <body>
     <div class="app-shell">
       <div class="app-meta" aria-label="앱 버전과 업데이트 상태">
-        <span id="appVersion">Life RPG Point v0.3.4</span>
+        <span id="appVersion">Life RPG Point v0.4.0</span>
         <button id="forceRefreshButton" class="text-button" type="button">업데이트 확인</button>
       </div>
 
@@ -47,6 +47,18 @@
             <strong id="pointBalance">0 P</strong>
             <p id="motivationText">움직임은 수입이고, 소비는 선택입니다.</p>
           </div>
+
+          <div class="character-card" aria-label="내 캐릭터 성장 요약">
+            <div>
+              <span class="character-kicker">대표 정체성</span>
+              <strong id="identityLabel">기록 대기자</strong>
+              <p id="identityCopy">아직 삶의 패턴을 읽을 기록이 부족합니다.</p>
+            </div>
+            <div id="lifeWeekLabel" class="life-week">이번 주</div>
+          </div>
+
+          <div id="lifeStatGrid" class="life-stat-grid" aria-label="인생 스탯"></div>
+          <div id="weeklyReviewBox" class="weekly-review" aria-label="이번 주 성장 해석"></div>
 
           <div class="quick-actions" aria-label="빠른 실행">
             <button type="button" data-jump-tab="quests">활동 기록</button>
@@ -100,6 +112,7 @@
 
           <section class="subsection" aria-labelledby="activityRecordTitle">
             <h3 id="activityRecordTitle">내가 한 일 기록</h3>
+            <div id="quickRecordList" class="quick-record-list" aria-label="빠른 기록"></div>
             <form id="activityForm" class="activity-form">
               <label>
                 활동
@@ -216,6 +229,17 @@
             <h2 id="logsTitle">통합 기록</h2>
             <button class="danger-button" id="clearDataButton" type="button">전체 데이터 삭제</button>
           </div>
+          <section class="backup-panel" aria-labelledby="backupTitle">
+            <div>
+              <h3 id="backupTitle">데이터 보관</h3>
+              <p>기록은 이 기기 Safari에 저장됩니다. 가끔 백업 파일로 남겨두세요.</p>
+            </div>
+            <div class="backup-actions">
+              <button id="exportDataButton" class="ghost-button" type="button">백업 내보내기</button>
+              <button id="importDataButton" class="ghost-button" type="button">백업 가져오기</button>
+              <input id="importDataInput" type="file" accept="application/json,.json" hidden>
+            </div>
+          </section>
           <div id="activitySummary" class="summary-strip"></div>
           <div id="logList" class="compact-list"></div>
         </section>
