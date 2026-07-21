@@ -220,14 +220,49 @@ h3 {
 
 .character-card {
   display: grid;
-  grid-template-columns: minmax(0, 1fr) auto;
-  gap: 12px;
+  grid-template-columns: 148px minmax(0, 1fr) auto;
+  gap: 14px;
   align-items: center;
   margin-top: 12px;
-  padding: 14px;
+  padding: 16px;
   border: 1px solid rgba(101, 169, 255, 0.28);
   border-radius: 8px;
-  background: linear-gradient(135deg, rgba(101, 169, 255, 0.14), rgba(31, 41, 55, 0.74));
+  background:
+    radial-gradient(circle at 80px 70px, rgba(247, 201, 72, 0.16), transparent 110px),
+    linear-gradient(135deg, rgba(101, 169, 255, 0.14), rgba(31, 41, 55, 0.74));
+}
+
+.character-avatar {
+  position: relative;
+  display: grid;
+  place-items: center;
+  width: 136px;
+  aspect-ratio: 1;
+  border: 1px solid rgba(247, 201, 72, 0.28);
+  border-radius: 8px;
+  background: rgba(7, 11, 19, 0.42);
+  box-shadow: inset 0 0 28px rgba(0, 0, 0, 0.3);
+}
+
+.character-avatar svg {
+  width: min(100%, 132px);
+  height: auto;
+}
+
+.character-avatar > span {
+  position: absolute;
+  left: 50%;
+  bottom: 7px;
+  transform: translateX(-50%);
+  min-width: 48px;
+  padding: 3px 8px;
+  border: 1px solid var(--line);
+  border-radius: 999px;
+  color: var(--gold);
+  background: rgba(7, 11, 19, 0.78);
+  font-size: 0.68rem;
+  font-weight: 900;
+  text-align: center;
 }
 
 .character-kicker {
@@ -252,6 +287,7 @@ h3 {
 }
 
 .life-week {
+  align-self: start;
   padding: 8px 10px;
   border: 1px solid var(--line);
   border-radius: 999px;
@@ -1102,6 +1138,21 @@ canvas {
 
 .toast.show {
   transform: translateY(0);
+}
+
+@media (max-width: 560px) {
+  .character-card {
+    grid-template-columns: 1fr;
+  }
+
+  .character-avatar {
+    width: min(100%, 180px);
+    margin: 0 auto;
+  }
+
+  .life-week {
+    justify-self: start;
+  }
 }
 
 @media (min-width: 720px) {

@@ -258,7 +258,7 @@ const levelThresholds = [
 ];
 
 const STORAGE_KEY = "lifeRpgPointState.v1";
-const APP_VERSION = "v0.4.0";
+const APP_VERSION = "v0.4.1";
 const WITHDRAW_FEE_RATE = 0.15;
 const HANGUL_INITIALS = ["ㄱ", "ㄲ", "ㄴ", "ㄷ", "ㄸ", "ㄹ", "ㅁ", "ㅂ", "ㅃ", "ㅅ", "ㅆ", "ㅇ", "ㅈ", "ㅉ", "ㅊ", "ㅋ", "ㅌ", "ㅍ", "ㅎ"];
 const shopCategories = ["전체", ...new Set(shopItems.map((item) => item.category))];
@@ -283,6 +283,7 @@ const el = {
   weeklySteps: document.querySelector("#weeklySteps"),
   incomeStatus: document.querySelector("#incomeStatus"),
   motivationText: document.querySelector("#motivationText"),
+  characterAvatar: document.querySelector("#characterAvatar"),
   identityLabel: document.querySelector("#identityLabel"),
   identityCopy: document.querySelector("#identityCopy"),
   lifeWeekLabel: document.querySelector("#lifeWeekLabel"),
@@ -822,6 +823,53 @@ function getIdentityFromStats(stats) {
   return { label, copy };
 }
 
+function getAvatarTheme(topStatId) {
+  const themes = {
+    body: { accent: "#52d273", aura: "#1d9f58", symbol: "STR", item: "검" },
+    wisdom: { accent: "#65a9ff", aura: "#2563eb", symbol: "WIS", item: "책" },
+    discipline: { accent: "#f7c948", aura: "#b98918", symbol: "DSC", item: "방패" },
+    faith: { accent: "#c084fc", aura: "#7c3aed", symbol: "FTH", item: "빛" },
+    creation: { accent: "#fb7185", aura: "#be123c", symbol: "CRT", item: "붓" },
+    recovery: { accent: "#5eead4", aura: "#0f766e", symbol: "RST", item: "잎" }
+  };
+  return themes[topStatId] || { accent: "#a7b0c3", aura: "#374151", symbol: "NEW", item: "씨앗" };
+}
+
+function renderCharacterAvatar(level, stats, identity) {
+  const topStat = stats[0] || { id: "new", value: 0, label: "기록" };
+  const theme = getAvatarTheme(topStat.value >= 1 ? topStat.id : "new");
+  const rank = level.level >= 15 ? "MASTER" : level.level >= 10 ? "ELITE" : level.level >= 5 ? "ADEPT" : "NOVICE";
+  const glow = Math.min(0.9, 0.28 + (level.level / 28));
+  el.characterAvatar.innerHTML = `
+    <svg viewBox="0 0 220 220" role="img" aria-label="${identity.label} 캐릭터">
+      <defs>
+        <radialGradient id="avatarAura" cx="50%" cy="38%" r="64%">
+          <stop offset="0%" stop-color="${theme.accent}" stop-opacity="${glow}"/>
+          <stop offset="100%" stop-color="${theme.aura}" stop-opacity="0"/>
+        </radialGradient>
+        <linearGradient id="avatarArmor" x1="45" x2="175" y1="55" y2="185">
+          <stop offset="0%" stop-color="${theme.accent}" stop-opacity="0.96"/>
+          <stop offset="100%" stop-color="#172033"/>
+        </linearGradient>
+      </defs>
+      <circle cx="110" cy="110" r="104" fill="url(#avatarAura)"/>
+      <circle cx="110" cy="112" r="84" fill="#0b1220" stroke="${theme.accent}" stroke-opacity="0.45" stroke-width="3"/>
+      <path d="M64 158c8-30 28-47 46-47s38 17 46 47v18H64v-18Z" fill="url(#avatarArmor)" stroke="${theme.accent}" stroke-width="3"/>
+      <circle cx="110" cy="81" r="34" fill="#f8fafc"/>
+      <path d="M75 76c11-29 27-39 43-35 19 4 31 18 30 41-14-11-34-10-73-6Z" fill="#111827" stroke="${theme.accent}" stroke-width="3"/>
+      <circle cx="98" cy="85" r="4" fill="#111827"/>
+      <circle cx="122" cy="85" r="4" fill="#111827"/>
+      <path d="M99 101c8 6 15 6 23 0" fill="none" stroke="#111827" stroke-linecap="round" stroke-width="4"/>
+      <path d="M55 129 34 92l19-10 23 42Z" fill="#111827" stroke="${theme.accent}" stroke-width="3"/>
+      <path d="M165 129 186 92l-19-10-23 42Z" fill="#111827" stroke="${theme.accent}" stroke-width="3"/>
+      <rect x="82" y="145" width="56" height="24" rx="8" fill="#070b13" stroke="${theme.accent}" stroke-width="2"/>
+      <text x="110" y="162" text-anchor="middle" fill="${theme.accent}" font-size="13" font-weight="900">${theme.symbol}</text>
+      <text x="110" y="197" text-anchor="middle" fill="#f8fafc" font-size="14" font-weight="900">Lv.${level.level} ${rank}</text>
+    </svg>
+    <span>${theme.item}</span>
+  `;
+}
+
 function getLifeWeekLabel(date = new Date()) {
   const start = new Date(date.getFullYear(), 0, 1);
   const dayOffset = Math.floor((date - start) / 86400000);
@@ -946,6 +994,7 @@ function renderDashboard() {
   el.identityLabel.textContent = identity.label;
   el.identityCopy.textContent = identity.copy;
   el.lifeWeekLabel.textContent = getLifeWeekLabel();
+  renderCharacterAvatar(level, allStats, identity);
   el.lifeStatGrid.innerHTML = lifeStatDefinitions.map((stat) => {
     const total = allStats.find((item) => item.id === stat.id)?.value || 0;
     const weekly = weeklyStats.find((item) => item.id === stat.id)?.value || 0;

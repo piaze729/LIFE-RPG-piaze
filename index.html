@@ -14,7 +14,7 @@
   <body>
     <div class="app-shell">
       <div class="app-meta" aria-label="앱 버전과 업데이트 상태">
-        <span id="appVersion">Life RPG Point v0.4.0</span>
+        <span id="appVersion">Life RPG Point v0.4.1</span>
         <button id="forceRefreshButton" class="text-button" type="button">업데이트 확인</button>
       </div>
 
@@ -42,19 +42,20 @@
             <span id="incomeStatus" class="pill">인컴 대기</span>
           </div>
 
-          <div class="point-card">
-            <span>지갑 포인트</span>
-            <strong id="pointBalance">0 P</strong>
-            <p id="motivationText">움직임은 수입이고, 소비는 선택입니다.</p>
-          </div>
-
           <div class="character-card" aria-label="내 캐릭터 성장 요약">
+            <div id="characterAvatar" class="character-avatar" aria-hidden="true"></div>
             <div>
               <span class="character-kicker">대표 정체성</span>
               <strong id="identityLabel">기록 대기자</strong>
               <p id="identityCopy">아직 삶의 패턴을 읽을 기록이 부족합니다.</p>
             </div>
             <div id="lifeWeekLabel" class="life-week">이번 주</div>
+          </div>
+
+          <div class="point-card">
+            <span>지갑 포인트</span>
+            <strong id="pointBalance">0 P</strong>
+            <p id="motivationText">움직임은 수입이고, 소비는 선택입니다.</p>
           </div>
 
           <div id="lifeStatGrid" class="life-stat-grid" aria-label="인생 스탯"></div>
